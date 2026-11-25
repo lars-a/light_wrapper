@@ -10,8 +10,10 @@ Fasst mehrere physische Lichter zu **einer** Lichtentität zusammen, die sich wi
 2. Repository `https://github.com/lars-a/light_wrapper` mit Typ **Integration** hinzufügen.
 3. **Light Wrapper** in HACS suchen und herunterladen.
 4. Home Assistant neu starten.
-5. **Einstellungen → Geräte & Dienste → Helfer → Helfer erstellen → Light Wrapper**.
+5. **Einstellungen → Geräte & Dienste → Integrationen → Integration hinzufügen → Light Wrapper**.
 6. Namen, Lichter und (optional) Standardwerte eingeben.
+
+Weitere Wrapper legst du auf der Seite der Integration (**Geräte & Dienste → Light Wrapper**) über **Gerät hinzufügen** an. Dort sind alle Wrapper aufgelistet; über **Konfigurieren** (Zahnrad) öffnest du den Dialog, um Lichter und Standardwerte eines Wrappers zu ändern. Umbenennen geht über das ⋮-Menü des Eintrags.
 
 ### Manuell
 
