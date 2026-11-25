@@ -6,13 +6,34 @@ Fasst mehrere physische Lichter zu **einer** Lichtentität zusammen, die sich wi
 
 ### Über HACS
 
-1. In Home Assistant **HACS** öffnen → Menü (⋮) → **Benutzerdefinierte Repositories**.
-2. Repository `https://github.com/lars-a/light_wrapper` mit Typ **Integration** hinzufügen.
-3. **Light Wrapper** in HACS suchen und herunterladen.
-4. Home Assistant neu starten.
-5. **Einstellungen → Geräte & Dienste → Integrationen → Integration hinzufügen → Light Wrapper**.
+Voraussetzung ist ein installiertes [HACS](https://hacs.xyz). Die Schaltflächen unten öffnen die passende Seite direkt in deinem Home Assistant (über [My Home Assistant](https://my.home-assistant.io); beim ersten Aufruf fragt die Seite nach der Adresse deiner Instanz).
+
+**Repository hinzufügen und installieren**
+
+[![Repository in HACS öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lars-a&repository=light_wrapper&category=integration)
+
+1. Auf die Schaltfläche klicken. HACS fragt, ob das Repository `lars-a/light_wrapper` als benutzerdefiniertes Repository hinzugefügt werden soll; mit **Hinzufügen** bestätigen.
+2. In HACS auf **Herunterladen** klicken und die neueste Version wählen.
+3. Home Assistant neu starten.
+
+Ohne Schaltfläche: **HACS** öffnen → Menü (⋮) → **Benutzerdefinierte Repositories** → `https://github.com/lars-a/light_wrapper` mit Typ **Integration** hinzufügen, dann **Light Wrapper** suchen und herunterladen.
+
+**Integration einrichten**
+
+[![Integration einrichten](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=light_wrapper)
+
+4. Auf die Schaltfläche klicken (oder **Einstellungen → Geräte & Dienste → Integrationen → Integration hinzufügen → Light Wrapper**).
    Es wird sofort der Eintrag **Light Wrapper** angelegt, ohne weitere Fragen. Er enthält die globalen Einstellungen.
-6. Auf der Seite der Integration (**Geräte & Dienste → Light Wrapper**) über **Lichtgruppe hinzufügen** Namen, Lichter und (optional) Standardwerte eingeben.
+
+**Lichtgruppen anlegen**
+
+[![Integration öffnen](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=light_wrapper)
+
+5. Auf der Seite der Integration (**Geräte & Dienste → Light Wrapper**) über **Lichtgruppe hinzufügen** Namen, Lichter und (optional) Standardwerte eingeben.
+
+**Updates**
+
+HACS zeigt neue Versionen unter **Einstellungen → Updates** bzw. in HACS selbst an. Nach dem Update Home Assistant neu starten.
 
 Die Seite der Integration ist so aufgebaut:
 
@@ -21,7 +42,7 @@ Die Seite der Integration ist so aufgebaut:
 
 ### Manuell
 
-Den Ordner `custom_components/light_wrapper` nach `<config>/custom_components/light_wrapper` kopieren, Home Assistant neu starten und weiter mit Schritt 5.
+Den Ordner `custom_components/light_wrapper` nach `<config>/custom_components/light_wrapper` kopieren, Home Assistant neu starten und weiter mit Schritt 4 („Integration einrichten“).
 
 Benötigt Home Assistant 2025.3 oder neuer. Das Icon der Integration (`custom_components/light_wrapper/brand/`) zeigt Home Assistant ab Version 2026.3 an; ältere Versionen zeigen stattdessen einen Platzhalter.
 
