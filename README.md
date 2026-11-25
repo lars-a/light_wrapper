@@ -1,106 +1,110 @@
-# Light Wrapper für Home Assistant
+# Light Wrapper for Home Assistant
 
-Fasst mehrere physische Lichter zu **einer** Lichtentität zusammen, die sich wie ein normales Licht verhält (Ein/Aus, Helligkeit, Farbtemperatur, Farben, Effekte, Übergänge). Dazu kommen optionale **Standardwerte** für Helligkeit und Farbtemperatur, die beim Einschalten ohne Parameter verwendet werden, sowie **Standard-Übergangszeiten** für Ein- und Ausschalten, global oder pro Gruppe.
+**English** | [Deutsch](README.de.md)
+
+Combines several physical lights into **one** light entity that behaves like a regular light (on/off, brightness, color temperature, colors, effects, transitions). On top of that, there are optional **defaults** for brightness and color temperature that are used when the light is turned on without parameters, and **default transitions** for turning on and off, either global or per group.
 
 ## Installation
 
-### Über den Marketplace bzw. HACS
+### Via the Marketplace or HACS
 
-Ab Home Assistant **2026.11** ist HACS als **Marketplace** fest eingebaut (**Einstellungen → Marketplace**); eine eigene HACS-Installation ist dann weder nötig noch möglich. Bei älteren Versionen muss [HACS](https://hacs.xyz) installiert sein.
+Starting with Home Assistant **2026.11**, HACS is built in as the **Marketplace** (**Settings → Marketplace**); a separate HACS installation is then neither needed nor possible. Older versions require [HACS](https://hacs.xyz) to be installed.
 
-Die Schaltflächen unten öffnen die passende Seite direkt in deinem Home Assistant (über [My Home Assistant](https://my.home-assistant.io); beim ersten Aufruf fragt die Seite nach der Adresse deiner Instanz).
+The buttons below open the matching page directly in your Home Assistant (via [My Home Assistant](https://my.home-assistant.io); on first use, the page asks for the address of your instance).
 
-**Repository hinzufügen und installieren**
+**Add the repository and install**
 
-[![Repository im Marketplace bzw. in HACS öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lars-a&repository=light_wrapper&category=integration)
+[![Open the repository in the Marketplace or HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lars-a&repository=light_wrapper&category=integration)
 
-1. Auf die Schaltfläche klicken. Ab 2026.11 öffnet sie den Marketplace, bei älteren Versionen HACS. Die Frage, ob das Repository `lars-a/light_wrapper` hinzugefügt werden soll, mit **Hinzufügen** bestätigen.
-2. **Light Wrapper** öffnen, auf **Herunterladen** klicken und die neueste Version wählen.
-3. Home Assistant neu starten.
+1. Click the button. From 2026.11 on, it opens the Marketplace; on older versions, HACS. When asked whether to add the repository `lars-a/light_wrapper`, confirm with **Add**.
+2. Open **Light Wrapper**, click **Download** and select the latest version.
+3. Restart Home Assistant.
 
-Ohne Schaltfläche fügst du das Repository `https://github.com/lars-a/light_wrapper` (Typ **Integration**) so hinzu:
+Without the button, add the repository `https://github.com/lars-a/light_wrapper` (type **Integration**) like this:
 
-* ab 2026.11: **Einstellungen → Marketplace → Per Link hinzufügen**
-* vor 2026.11: **HACS** → Menü (⋮) → **Benutzerdefinierte Repositories**
+* from 2026.11: **Settings → Marketplace → Add via link**
+* before 2026.11: **HACS** → menu (⋮) → **Custom repositories**
 
-Bestehende HACS-Installationen werden beim Update auf 2026.11 automatisch in den Marketplace übernommen, einschließlich benutzerdefinierter Repositories wie diesem.
+Existing HACS installations are moved to the Marketplace automatically when updating to 2026.11, including custom repositories like this one.
 
-**Integration einrichten**
+**Set up the integration**
 
-[![Integration einrichten](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=light_wrapper)
+[![Set up the integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=light_wrapper)
 
-4. Auf die Schaltfläche klicken (oder **Einstellungen → Geräte & Dienste → Integrationen → Integration hinzufügen → Light Wrapper**).
-   Es wird sofort der Eintrag **Light Wrapper** angelegt, ohne weitere Fragen. Er enthält die globalen Einstellungen.
+4. Click the button (or **Settings → Devices & services → Integrations → Add integration → Light Wrapper**).
+   The **Light Wrapper** entry is created right away, without further questions. It holds the global settings.
 
-**Lichtgruppen anlegen**
+**Add light groups**
 
-[![Integration öffnen](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=light_wrapper)
+[![Open the integration](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=light_wrapper)
 
-5. Auf der Seite der Integration (**Geräte & Dienste → Light Wrapper**) über **Lichtgruppe hinzufügen** Namen, Lichter und (optional) Standardwerte eingeben.
+5. On the integration page (**Devices & services → Light Wrapper**), use **Add light group** and enter a name, the lights and (optionally) defaults.
 
-Die Seite der Integration ist so aufgebaut:
+The integration page is organized like this:
 
-* **Light Wrapper**: der einzige Eintrag. Über **Konfigurieren** (Zahnrad) stellst du die globalen Einstellungen ein.
-* Darunter die **Lichtgruppen**. Jede hat ein eigenes Gerät und lässt sich dort bearbeiten (Name, Lichter, Standardwerte) oder löschen. Beim Löschen verschwinden auch ihr Gerät und ihre Entitäten.
+* **Light Wrapper**: the only entry. Use **Configure** (gear icon) to change the global settings.
+* Below it, the **light groups**. Each has its own device and can be edited there (name, lights, defaults) or deleted. Deleting a group also removes its device and entities.
 
 **Updates**
 
-Neue Versionen erscheinen unter **Einstellungen → Updates** bzw. im Marketplace (vor 2026.11: in HACS). Nach dem Update Home Assistant neu starten.
+New versions appear under **Settings → Updates** and in the Marketplace (before 2026.11: in HACS). Restart Home Assistant after updating.
 
-### Manuell
+### Manual
 
-Den Ordner `custom_components/light_wrapper` nach `<config>/custom_components/light_wrapper` kopieren, Home Assistant neu starten und weiter mit Schritt 4 („Integration einrichten“).
+Copy the folder `custom_components/light_wrapper` to `<config>/custom_components/light_wrapper`, restart Home Assistant and continue with step 4 ("Set up the integration").
 
-Benötigt Home Assistant 2025.3 oder neuer. Das Icon der Integration (`custom_components/light_wrapper/brand/`) zeigt Home Assistant ab Version 2026.3 an; ältere Versionen zeigen stattdessen einen Platzhalter.
+Requires Home Assistant 2025.3 or newer. Home Assistant shows the integration icon (`custom_components/light_wrapper/brand/`) from version 2026.3 on; older versions show a placeholder instead.
 
-## Was angelegt wird
+## What gets created
 
-Pro Lichtgruppe entsteht ein Gerät mit:
+Each light group gets a device with:
 
-| Entität | Zweck |
+| Entity | Purpose |
 |---|---|
-| `light.<name>` | Die Lichtgruppe |
-| `number.<name>_standardhelligkeit` | Standardhelligkeit in % (nur wenn aktiviert) |
-| `number.<name>_standard_farbtemperatur` | Standard-Farbtemperatur in K (nur wenn aktiviert; nicht verfügbar, wenn keines der Lichter Farbtemperatur kann) |
-| `number.<name>_ubergangszeit_einschalten` | Eigene Übergangszeit beim Einschalten in s (nur wenn aktiviert) |
-| `number.<name>_ubergangszeit_ausschalten` | Eigene Übergangszeit beim Ausschalten in s (nur wenn aktiviert) |
-| `switch.<name>_standardwerte_auch_wenn_an` | Standardwerte auch bei schon eingeschalteter Gruppe anwenden (standardmäßig an, siehe unten) |
+| `light.<name>` | The light group |
+| `number.<name>_default_brightness` | Default brightness in % (only if enabled) |
+| `number.<name>_default_color_temperature` | Default color temperature in K (only if enabled; unavailable if none of the lights supports color temperature) |
+| `number.<name>_transition_on` | Own transition when turning on, in s (only if enabled) |
+| `number.<name>_transition_off` | Own transition when turning off, in s (only if enabled) |
+| `switch.<name>_apply_defaults_when_on` | Apply defaults even if the group is already on (on by default, see below) |
 
-Über die Number-Entitäten kannst du die Werte im Dashboard oder per Automation ändern, zum Beispiel tagsüber kühl und hell, abends warm und gedimmt. Aktivieren oder deaktivieren lassen sich die Standardwerte im Bearbeiten-Dialog der Gruppe über die Schalter „… verwenden“; den Wert selbst stellst du dort per Slider ein.
+Entity IDs depend on the system language of Home Assistant; shown here for English.
 
-Der Bereich der Standard-Farbtemperatur ist der **gemeinsame Bereich** aller Lichter mit Farbtemperatur. Bei einer Lampe mit 2200–6500 K und einer mit 2700–5000 K geht er also von 2700 bis 5000 K, und jeder Wert passt für alle Lampen. Weitere Regeln:
+With the number entities you can change the values from a dashboard or an automation, for example cool and bright during the day, warm and dimmed in the evening. The defaults are enabled or disabled in the group's edit dialog with the "Use …" toggles; the value itself is set there with a slider.
 
-* Lichter ohne Farbtemperatur zählen nicht mit.
-* Sind die Lichter noch nicht bekannt, gilt 2000–6500 K. Das betrifft auch das Formular beim Anlegen, weil dort noch keine Lichter gewählt sind.
-* Überschneiden sich die Bereiche gar nicht, gilt der Gesamtbereich.
-* Liegt ein eingegebener Wert außerhalb des Bereichs der gewählten Lichter, wird er beim Speichern auf den nächsten passenden Wert gesetzt.
+The range of the default color temperature is the **common range** of all lights with color temperature. With one lamp at 2200–6500 K and another at 2700–5000 K, it goes from 2700 to 5000 K, so every value works for all lamps. Further rules:
 
-## Globale Einstellungen
+* Lights without color temperature are not counted.
+* If the lights are not known yet, 2000–6500 K applies. This also affects the form when adding a group, because no lights are selected there yet.
+* If the ranges do not overlap at all, the combined range applies.
+* If an entered value is outside the range of the selected lights, it is set to the nearest valid value when saving.
 
-Die globalen Einstellungen öffnest du über **Konfigurieren** am Eintrag **Light Wrapper**. Sie legen Standard-Übergangszeiten für **alle** Lichtgruppen fest, getrennt für Ein- und Ausschalten (je 0–10 s in 0,1-s-Schritten). Für jede aktivierte Übergangszeit gibt es eine Number-Entität am Gerät **Globale Einstellungen** (`number.globale_einstellungen_ubergangszeit_einschalten` bzw. `…_ausschalten`).
+## Global settings
 
-Jede Gruppe kann in ihrem Bearbeiten-Dialog mit „Eigene Übergangszeit … verwenden“ einen eigenen Wert festlegen. Der eigene Wert geht vor; ohne eigenen Wert gilt der globale, und ohne beides wird keine Übergangszeit gesendet.
+Open the global settings with **Configure** on the **Light Wrapper** entry. They define default transitions for **all** light groups, separately for turning on and off (0–10 s each, in 0.1 s steps). Each enabled transition gets a number entity on the **Global settings** device (`number.global_settings_transition_on` or `…_transition_off`).
 
-Eine Übergangszeit von 0 s wird ausdrücklich als `transition: 0` gesendet. Das ist nicht dasselbe wie keine Übergangszeit: Lampen mit eigenem, eingebautem Übergang schalten dann sofort.
+Each group can set its own value in its edit dialog with "Use own transition …". The group's own value takes precedence; without one, the global value applies, and without either, no transition is sent.
 
-## Verhalten beim Ein- und Ausschalten
+A transition of 0 s is sent explicitly as `transition: 0`. This is not the same as no transition: lamps with their own built-in transition then switch instantly.
 
-* Der Schalter **„Standardwerte auch wenn an“** (im Bearbeiten-Dialog der Gruppe oder als Switch-Entität) ist standardmäßig **an**. Dann setzt ein `turn_on` **ohne Parameter** die Standardwerte auch bei schon eingeschalteter Gruppe. Nur `transition` darf zusätzlich angegeben sein. Kommt eine Helligkeit oder Farbe mit, gilt das normale Verhalten: Bei eingeschalteter Gruppe wird nur der angegebene Wert geändert. Ein Helligkeits-Slider im Dashboard setzt also nicht nebenbei die Farbtemperatur zurück.
-* Ist der Schalter **aus**, greifen Standardwerte nur, wenn die Gruppe **vorher aus** war. Ein `turn_on` auf ein schon eingeschaltetes Licht ändert dann nichts an Helligkeit oder Farbe.
-* Die **Standardhelligkeit** wird verwendet, wenn keine Helligkeit angegeben ist (`brightness`, `brightness_pct`, `brightness_step`, `white`).
-* Die **Standard-Farbtemperatur** wird verwendet, wenn keine Farbe angegeben ist (`color_temp_kelvin`, `hs_color`, `rgb_color`, `xy_color`, `white`, `effect` …). Sie geht nur an Mitglieder, die Farbtemperatur unterstützen, und wird auf deren Bereich begrenzt.
-* War die Gruppe aus, werden beide Werte unabhängig voneinander geprüft: `light.turn_on` mit nur `brightness_pct: 30` setzt dann trotzdem die Standard-Farbtemperatur.
-* `transition` und `flash` werden immer durchgereicht.
-* Die **Standard-Übergangszeit** wird bei jedem `turn_on` bzw. `turn_off` ohne `transition` und ohne `flash` verwendet, auch wenn die Gruppe schon an ist (z. B. beim Ändern der Helligkeit). Sie geht nur an Mitglieder, die Übergänge unterstützen.
+## Behavior when turning on and off
 
-## Zustand der Gruppe
+* The **"Apply defaults when on"** switch (in the group's edit dialog or as a switch entity) is **on** by default. A `turn_on` **without parameters** then applies the defaults even if the group is already on. Only `transition` may be given in addition. If a brightness or color is included, the normal behavior applies: with the group already on, only the given value changes. So a brightness slider in a dashboard does not reset the color temperature along the way.
+* If the switch is **off**, defaults only apply if the group was **off before**. A `turn_on` on a light that is already on then does not change brightness or color.
+* The **default brightness** is used if no brightness is given (`brightness`, `brightness_pct`, `brightness_step`, `white`).
+* The **default color temperature** is used if no color is given (`color_temp_kelvin`, `hs_color`, `rgb_color`, `xy_color`, `white`, `effect` …). It is only sent to members that support color temperature and is limited to their range.
+* If the group was off, both values are checked independently: `light.turn_on` with only `brightness_pct: 30` still applies the default color temperature.
+* `transition` and `flash` are always passed through.
+* The **default transition** is used for every `turn_on` or `turn_off` without `transition` and without `flash`, even if the group is already on (for example when changing the brightness). It is only sent to members that support transitions.
 
-* **An**, sobald mindestens ein Mitglied an ist; **nicht verfügbar**, wenn alle Mitglieder nicht verfügbar sind.
-* Helligkeit, Farbtemperatur und Farben sind der Mittelwert der eingeschalteten Mitglieder.
-* Unterstützte Farbmodi und Features sind die Vereinigung aller Mitglieder. Als aktueller Farbmodus gilt der häufigste unter den eingeschalteten Mitgliedern.
-* Das Attribut `entity_id` listet die Mitglieder, wie bei normalen Gruppen.
-* Aktive Standardwerte der Gruppe stehen zusätzlich als Attribute an der Lichtentität (`default_brightness_pct`, `default_color_temp_kelvin`, `default_transition_on`, `default_transition_off`). Globale Übergangszeiten erscheinen dort nicht.
+## Group state
 
-## Lizenz
+* **On** as soon as at least one member is on; **unavailable** if all members are unavailable.
+* Brightness, color temperature and colors are the average of the members that are on.
+* Supported color modes and features are the union of all members. The current color mode is the most common one among the members that are on.
+* The `entity_id` attribute lists the members, as with regular groups.
+* The group's active defaults are also shown as attributes of the light entity (`default_brightness_pct`, `default_color_temp_kelvin`, `default_transition_on`, `default_transition_off`). Global transitions do not appear there.
+
+## License
 
 [MIT](LICENSE)

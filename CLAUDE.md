@@ -1,8 +1,13 @@
 # Light Wrapper – Hinweise für Claude
 
-Home-Assistant-Custom-Integration (Domain `light_wrapper`), installiert über HACS als benutzerdefiniertes Repository aus `github.com/lars-a/light_wrapper`. Sie fasst mehrere Lichter zu einer Lichtentität zusammen. Dazu kommen optionale Standardwerte für Helligkeit und Farbtemperatur, die beim Einschalten ohne Parameter gelten, und Standard-Übergangszeiten für Ein- und Ausschalten (pro Gruppe oder global). Das Verhalten im Detail steht im README.
+Home-Assistant-Custom-Integration (Domain `light_wrapper`), installiert über HACS als benutzerdefiniertes Repository aus `github.com/lars-a/light_wrapper`. Sie fasst mehrere Lichter zu einer Lichtentität zusammen. Dazu kommen optionale Standardwerte für Helligkeit und Farbtemperatur, die beim Einschalten ohne Parameter gelten, und Standard-Übergangszeiten für Ein- und Ausschalten (pro Gruppe oder global). Das Verhalten im Detail steht im README (`README.md` englisch, `README.de.md` deutsch).
 
-Sprache: Code-Kommentare, Docstrings, Commit-Messages und README sind auf Deutsch. Mit dem Nutzer wird Deutsch gesprochen.
+Sprache:
+
+- Commit-Messages sind auf **Englisch**.
+- Code-Kommentare und Docstrings sind auf Deutsch.
+- README gibt es zweimal: `README.md` (Englisch, wird von GitHub und HACS/Marketplace angezeigt) und `README.de.md` (Deutsch). Bei jeder Änderung **beide** pflegen; oben verlinken sie einander.
+- Mit dem Nutzer wird Deutsch gesprochen.
 
 ## Aufbau
 
