@@ -59,3 +59,7 @@ Die Lichter in den Tests sind simulierte Zustände; Aufrufe an die Mitglieder we
 * Helligkeit, Farbtemperatur und Farben sind der Mittelwert der eingeschalteten Mitglieder.
 * Unterstützte Farbmodi und Features sind die Vereinigung aller Mitglieder. Als aktueller Farbmodus gilt der häufigste unter den eingeschalteten Mitgliedern.
 * Das Attribut `entity_id` listet die Mitglieder, wie bei normalen Gruppen.
+
+## Lizenz
+
+[MIT](LICENSE)
