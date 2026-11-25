@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Create Light Wrapper",
+        "description": "Combines several lights into one light entity. Optional defaults are used when the light is turned on without brightness or color.",
+        "data": {
+          "name": "Name",
+          "entities": "Lights",
+          "default_brightness_pct": "Default brightness",
+          "default_color_temp_kelvin": "Default color temperature"
+        },
+        "data_description": {
+          "default_brightness_pct": "Leave empty to use no default brightness.",
+          "default_color_temp_kelvin": "Only sent to lights that support color temperature. Leave empty to disable."
+        }
+      }
+    },
+    "error": {
+      "no_entities": "Please select at least one light."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edit Light Wrapper",
+        "data": {
+          "entities": "Lights",
+          "default_brightness_pct": "Default brightness",
+          "default_color_temp_kelvin": "Default color temperature"
+        },
+        "data_description": {
+          "default_brightness_pct": "Leave empty to use no default brightness.",
+          "default_color_temp_kelvin": "Only sent to lights that support color temperature. Leave empty to disable."
+        }
+      }
+    },
+    "error": {
+      "no_entities": "Please select at least one light."
+    }
+  },
+  "entity": {
+    "number": {
+      "default_brightness": { "name": "Default brightness" },
+      "default_color_temp": { "name": "Default color temperature" }
+    }
+  }
+}

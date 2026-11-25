@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Light Wrapper erstellen",
+        "description": "Fasst mehrere Lichter zu einer Lichtentität zusammen. Optionale Standardwerte werden beim Einschalten verwendet, wenn keine Helligkeit bzw. Farbe angegeben ist.",
+        "data": {
+          "name": "Name",
+          "entities": "Lichter",
+          "default_brightness_pct": "Standardhelligkeit",
+          "default_color_temp_kelvin": "Standard-Farbtemperatur"
+        },
+        "data_description": {
+          "default_brightness_pct": "Leer lassen, um keine Standardhelligkeit zu verwenden.",
+          "default_color_temp_kelvin": "Wird nur an Lichter gesendet, die Farbtemperatur unterstützen. Leer lassen, um sie nicht zu verwenden."
+        }
+      }
+    },
+    "error": {
+      "no_entities": "Bitte mindestens ein Licht auswählen."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Light Wrapper bearbeiten",
+        "data": {
+          "entities": "Lichter",
+          "default_brightness_pct": "Standardhelligkeit",
+          "default_color_temp_kelvin": "Standard-Farbtemperatur"
+        },
+        "data_description": {
+          "default_brightness_pct": "Leer lassen, um keine Standardhelligkeit zu verwenden.",
+          "default_color_temp_kelvin": "Wird nur an Lichter gesendet, die Farbtemperatur unterstützen. Leer lassen, um sie nicht zu verwenden."
+        }
+      }
+    },
+    "error": {
+      "no_entities": "Bitte mindestens ein Licht auswählen."
+    }
+  },
+  "entity": {
+    "number": {
+      "default_brightness": { "name": "Standardhelligkeit" },
+      "default_color_temp": { "name": "Standard-Farbtemperatur" }
+    }
+  }
+}

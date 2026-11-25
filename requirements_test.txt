@@ -1,0 +1,2 @@
+# Bringt die passende Home-Assistant-Version, pytest und alle Test-Fixtures mit.
+pytest-homeassistant-custom-component

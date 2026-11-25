@@ -1,0 +1,25 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version im Manifest auf Release-Tag setzen
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          jq --arg v "$VERSION" '.version = $v' custom_components/light_wrapper/manifest.json > m.json
+          mv m.json custom_components/light_wrapper/manifest.json
+      - name: ZIP bauen
+        run: cd custom_components/light_wrapper && zip -r ../../light_wrapper.zip .
+      - name: An Release anhängen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" light_wrapper.zip --clobber

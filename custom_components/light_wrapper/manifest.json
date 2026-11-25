@@ -1,0 +1,13 @@
+{
+  "domain": "light_wrapper",
+  "name": "Light Wrapper",
+  "codeowners": ["@lars-a"],
+  "config_flow": true,
+  "dependencies": ["light"],
+  "documentation": "https://github.com/lars-a/light_wrapper",
+  "integration_type": "helper",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/lars-a/light_wrapper/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
