@@ -1,4 +1,4 @@
-"""Gemeinsame Helfer für Entitäten."""
+"""Shared helpers for entities."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from .const import DOMAIN, MAX_COLOR_TEMP_KELVIN, MIN_COLOR_TEMP_KELVIN
 
 
 def device_info(entry: ConfigEntry, subentry: ConfigSubentry | None) -> DeviceInfo:
-    """Virtuelles Gerät: eines pro Lichtgruppe und eines für die globalen Einstellungen."""
+    """Virtual device: one per light group and one for the global settings."""
     if subentry is None:
         return DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
@@ -41,9 +41,9 @@ def device_info(entry: ConfigEntry, subentry: ConfigSubentry | None) -> DeviceIn
 
 
 class LightWrapperSettingEntity(Entity):
-    """Basis für Einstellungs-Entitäten (Number, Switch) einer Gruppe oder der globalen Einstellungen.
+    """Base for setting entities (number, switch) of a group or of the global settings.
 
-    Gespeichert wird bei Gruppen in subentry.data, global in entry.options.
+    Groups store their values in subentry.data, the global settings in entry.options.
     """
 
     _attr_has_entity_name = True
@@ -67,7 +67,7 @@ class LightWrapperSettingEntity(Entity):
         self.async_on_remove(self._data.async_add_listener(self.async_write_ha_state))
 
     def _store(self, value: Any) -> None:
-        """Einstellung speichern; None entfernt den Schlüssel."""
+        """Store the setting; None removes the key."""
         config_entries = self.hass.config_entries
         if self._subentry_id is None:
             config_entries.async_update_entry(
@@ -88,12 +88,12 @@ def _with_value(mapping: Mapping[str, Any], key: str, value: Any) -> dict[str, A
 
 
 def color_temp_range(hass: HomeAssistant, entity_ids: Iterable[str]) -> tuple[int, int]:
-    """Farbtemperaturbereich, den alle Mitglieder mit Farbtemperatur gemeinsam haben.
+    """Color temperature range shared by all members with color temperature.
 
-    Berücksichtigt werden nur Mitglieder, die Farbtemperatur unterstützen und
-    ihren Bereich melden. Ist keines bekannt (z. B. weil die Lichter noch nicht
-    geladen sind), gilt der feste Bereich. Überschneiden sich die Bereiche nicht,
-    wird ersatzweise der Gesamtbereich verwendet, damit der Slider bedienbar bleibt.
+    Only members that support color temperature and report their range are
+    considered. If none is known (e.g. because the lights are not loaded yet),
+    the fixed range applies. If the ranges do not overlap, the combined range
+    is used instead, so the slider stays usable.
     """
     lows: list[int] = []
     highs: list[int] = []
@@ -117,6 +117,6 @@ def color_temp_range(hass: HomeAssistant, entity_ids: Iterable[str]) -> tuple[in
 
 
 def clamp(value: int, value_range: tuple[int, int]) -> int:
-    """Wert auf einen Bereich begrenzen."""
+    """Limit a value to a range."""
     low, high = value_range
     return max(low, min(high, value))

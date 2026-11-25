@@ -1,4 +1,4 @@
-"""Config- und Options-Flow für Light Wrapper."""
+"""Config, options and subentry flows for Light Wrapper."""
 
 from __future__ import annotations
 
@@ -41,13 +41,13 @@ from .const import (
 )
 from .entity import clamp, color_temp_range
 
-# Schalter, ob ein Standardwert verwendet wird (werden nicht gespeichert)
+# Toggles that decide whether a default is used (they are not stored)
 CONF_USE_DEFAULT_BRIGHTNESS = "use_default_brightness"
 CONF_USE_DEFAULT_COLOR_TEMP = "use_default_color_temp"
 CONF_USE_DEFAULT_TRANSITION_ON = "use_default_transition_on"
 CONF_USE_DEFAULT_TRANSITION_OFF = "use_default_transition_off"
 
-# Schalter -> Wert, mit Startwert für den Slider, solange noch nichts gespeichert ist
+# Toggle -> value, with the slider's start value while nothing is stored yet
 _TRANSITION_TOGGLES: dict[str, tuple[str, float]] = {
     CONF_USE_DEFAULT_TRANSITION_ON: (CONF_DEFAULT_TRANSITION_ON, FALLBACK_TRANSITION),
     CONF_USE_DEFAULT_TRANSITION_OFF: (CONF_DEFAULT_TRANSITION_OFF, FALLBACK_TRANSITION),
@@ -60,7 +60,7 @@ _GROUP_TOGGLES: dict[str, tuple[str, float]] = {
 
 
 def _transition_fields() -> dict[vol.Marker, Any]:
-    """Schalter + Slider (0–10 s in 0,1-s-Schritten) für Ein- und Ausschalten."""
+    """Toggle + slider (0–10 s in 0.1 s steps) for turning on and off."""
     slider = selector.NumberSelector(
         selector.NumberSelectorConfig(
             min=MIN_TRANSITION,
@@ -123,7 +123,7 @@ def _global_schema() -> vol.Schema:
 def _toggle_values(
     options: Mapping[str, Any], toggles: Mapping[str, tuple[str, float]]
 ) -> dict[str, Any]:
-    """Gespeicherte Standardwerte als Schalter + Slider vorbelegen."""
+    """Prefill stored defaults as toggle + slider."""
     values: dict[str, Any] = {}
     for toggle, (key, fallback) in toggles.items():
         values[toggle] = options.get(key) is not None
@@ -134,7 +134,7 @@ def _toggle_values(
 def _toggle_options(
     user_input: Mapping[str, Any], toggles: Mapping[str, tuple[str, float]]
 ) -> dict[str, Any]:
-    """Nur Standardwerte mit aktivem Schalter übernehmen."""
+    """Take over only defaults whose toggle is on."""
     options: dict[str, Any] = {}
     for toggle, (key, fallback) in toggles.items():
         if user_input.get(toggle):
@@ -146,10 +146,10 @@ def _toggle_options(
 def _group_form_values(
     options: Mapping[str, Any], color_temp_bounds: tuple[int, int]
 ) -> dict[str, Any]:
-    """Gespeicherte Optionen einer Gruppe in Formularwerte umwandeln.
+    """Convert a group's stored settings to form values.
 
-    Die Farbtemperatur wird auf den Bereich des Sliders begrenzt, sonst ließe
-    sich das Formular mit dem vorbelegten Wert nicht absenden.
+    The color temperature is limited to the slider's range; otherwise the form
+    could not be submitted with the prefilled value.
     """
     values: dict[str, Any] = {CONF_ENTITIES: list(options.get(CONF_ENTITIES, []))}
     values.update(_toggle_values(options, _GROUP_TOGGLES))
@@ -159,12 +159,12 @@ def _group_form_values(
 
 
 def _group_options(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str, Any]:
-    """Formularwerte einer Gruppe in Optionen umwandeln; abgeschaltete Standardwerte entfallen.
+    """Convert a group's form values to settings; disabled defaults are dropped.
 
-    Der Schalter „auch wenn an“ wird nur gespeichert, wenn er abgeschaltet ist.
+    The "apply when on" switch is only stored when it is off.
 
-    Die Farbtemperatur wird auf den gemeinsamen Bereich der gewählten Lichter
-    begrenzt (die Lichtauswahl kann sich im selben Formular geändert haben).
+    The color temperature is limited to the common range of the selected lights
+    (the selection may have changed in the same form).
     """
     options: dict[str, Any] = {CONF_ENTITIES: list(user_input.get(CONF_ENTITIES, []))}
     options.update(_toggle_options(user_input, _GROUP_TOGGLES))
@@ -185,9 +185,9 @@ def _with_name(name: str | None, schema: vol.Schema) -> vol.Schema:
 
 
 class LightWrapperConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Integration einrichten: legt sofort den einzigen Eintrag an (globale Einstellungen).
+    """Set up the integration: creates the only entry (global settings) right away.
 
-    Lichtgruppen werden danach als Untereinträge hinzugefügt.
+    Light groups are added afterwards as subentries.
     """
 
     VERSION = 1
@@ -205,12 +205,12 @@ class LightWrapperConfigFlow(ConfigFlow, domain=DOMAIN):
         return {SUBENTRY_TYPE_GROUP: LightGroupSubentryFlow}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        # Nur ein Eintrag erlaubt (single_config_entry im Manifest)
+        # Only one entry allowed (single_config_entry in the manifest)
         return self.async_create_entry(title=ENTRY_TITLE, data={}, options={})
 
 
 class LightWrapperOptionsFlow(OptionsFlow):
-    """Globale Einstellungen ändern (Standard-Übergangszeiten für alle Gruppen)."""
+    """Change the global settings (default transitions for all groups)."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
@@ -227,7 +227,7 @@ class LightWrapperOptionsFlow(OptionsFlow):
 
 
 class LightGroupSubentryFlow(ConfigSubentryFlow):
-    """Lichtgruppe hinzufügen oder bearbeiten."""
+    """Add or edit a light group."""
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -240,7 +240,7 @@ class LightGroupSubentryFlow(ConfigSubentryFlow):
             else:
                 return self.async_create_entry(title=user_input[CONF_NAME], data=options)
 
-        # Die Lichter sind hier noch nicht gewählt: fester Bereich für den Slider
+        # No lights are selected yet: fixed range for the slider
         bounds = color_temp_range(self.hass, [])
         return self.async_show_form(
             step_id="user",
@@ -266,11 +266,11 @@ class LightGroupSubentryFlow(ConfigSubentryFlow):
                     entry, subentry, title=user_input[CONF_NAME], data=options
                 )
 
-        # Die eigene Lichtentität nicht zur Auswahl anbieten (Schleife vermeiden)
+        # Do not offer the group's own light entity (avoid loops)
         own_entity = er.async_get(self.hass).async_get_entity_id(
             LIGHT_DOMAIN, DOMAIN, subentry.subentry_id
         )
-        # Slider-Bereich: gemeinsamer Bereich der aktuell gespeicherten Lichter
+        # Slider range: common range of the currently stored lights
         bounds = color_temp_range(self.hass, subentry.data.get(CONF_ENTITIES, []))
         return self.async_show_form(
             step_id="reconfigure",

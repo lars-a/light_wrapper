@@ -1,4 +1,4 @@
-"""Tests für die Number-Entitäten (Standardwerte)."""
+"""Tests for the number entities (defaults)."""
 
 from __future__ import annotations
 
@@ -61,7 +61,7 @@ async def test_set_value_updates_options_without_reload(hass: HomeAssistant) -> 
     assert group_data(entry)[CONF_DEFAULT_BRIGHTNESS] == 35
     assert group_data(entry)[CONF_DEFAULT_COLOR_TEMP] == 2700
     assert entry.state is ConfigEntryState.LOADED
-    assert entry.runtime_data is runtime_before  # kein Reload
+    assert entry.runtime_data is runtime_before  # no reload
     assert float(hass.states.get(brightness_id).state) == 35
     assert hass.states.get(WRAPPER_ID).attributes[CONF_DEFAULT_BRIGHTNESS] == 35
 
@@ -76,7 +76,7 @@ async def test_color_temp_number_unavailable_without_capable_member(hass: HomeAs
 async def test_color_temp_number_becomes_available(hass: HomeAssistant) -> None:
     entry = await setup_wrapper(hass, [CT_LIGHT], **{CONF_DEFAULT_COLOR_TEMP: 2700})
     ct_id = number_entity_id(hass, entry, CONF_DEFAULT_COLOR_TEMP)
-    assert hass.states.get(ct_id).state == STATE_UNAVAILABLE  # Mitglied noch nicht da
+    assert hass.states.get(ct_id).state == STATE_UNAVAILABLE  # member not there yet
 
     set_member(hass, CT_LIGHT, "off")
     await hass.async_block_till_done()
@@ -86,7 +86,7 @@ async def test_color_temp_number_becomes_available(hass: HomeAssistant) -> None:
 async def test_color_temp_number_range_is_intersection(hass: HomeAssistant) -> None:
     set_member(hass, CT_LIGHT, "off", min_kelvin=2200, max_kelvin=6500)
     set_member(hass, "light.spot", "off", min_kelvin=2700, max_kelvin=5000)
-    set_member(hass, DIM_LIGHT, "off", modes=("brightness",))  # zählt nicht mit
+    set_member(hass, DIM_LIGHT, "off", modes=("brightness",))  # not counted
     entry = await setup_wrapper(
         hass, [CT_LIGHT, "light.spot", DIM_LIGHT], **{CONF_DEFAULT_COLOR_TEMP: 3000}
     )
@@ -98,7 +98,7 @@ async def test_color_temp_number_range_is_intersection(hass: HomeAssistant) -> N
 async def test_color_temp_number_range_follows_members(hass: HomeAssistant) -> None:
     entry = await setup_wrapper(hass, [CT_LIGHT], **{CONF_DEFAULT_COLOR_TEMP: 3000})
     ct_id = number_entity_id(hass, entry, CONF_DEFAULT_COLOR_TEMP)
-    # Mitglied noch nicht geladen: fester Bereich
+    # member not loaded yet: fixed range
     assert hass.states.get(ct_id).attributes["min"] == 2000
     assert hass.states.get(ct_id).attributes["max"] == 6500
 
@@ -155,4 +155,4 @@ async def test_global_transition_numbers(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
 
     assert entry.options[CONF_DEFAULT_TRANSITION_OFF] == 6.3
-    assert entry.runtime_data is runtime_before  # kein Reload
+    assert entry.runtime_data is runtime_before  # no reload

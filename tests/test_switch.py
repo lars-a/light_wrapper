@@ -1,4 +1,4 @@
-"""Tests für den Schalter „Standardwerte auch wenn an“."""
+"""Tests for the "apply defaults when on" switch."""
 
 from __future__ import annotations
 
@@ -47,13 +47,13 @@ async def test_switch_updates_options_without_reload(hass: HomeAssistant) -> Non
     assert group_data(entry)[CONF_APPLY_WHEN_ON] is False
     assert group_data(entry)[CONF_DEFAULT_BRIGHTNESS] == 60
     assert entry.state is ConfigEntryState.LOADED
-    assert entry.runtime_data is runtime_before  # kein Reload
+    assert entry.runtime_data is runtime_before  # no reload
     assert group_settings(entry).apply_when_on is False
     assert hass.states.get(switch_id).state == STATE_OFF
 
     await _switch(hass, SERVICE_TURN_ON, switch_id)
 
-    assert CONF_APPLY_WHEN_ON not in group_data(entry)  # nur gespeichert, wenn aus
+    assert CONF_APPLY_WHEN_ON not in group_data(entry)  # only stored when off
     assert entry.runtime_data is runtime_before
     assert group_settings(entry).apply_when_on is True
     assert hass.states.get(switch_id).state == STATE_ON

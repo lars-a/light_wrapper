@@ -1,4 +1,4 @@
-"""Gemeinsame Fixtures und Helfer für die Tests."""
+"""Shared fixtures and helpers for the tests."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ WRAPPER_ID = "light.wohnzimmer"
 
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
-    """Custom Integrations in allen Tests laden dürfen."""
+    """Allow loading custom integrations in all tests."""
     return
 
 
@@ -41,7 +41,7 @@ def set_member(
     features: int = 0,
     **extra: Any,
 ) -> None:
-    """Zustand eines (simulierten) physischen Lichts setzen."""
+    """Set the state of a (simulated) physical light."""
     attrs: dict[str, Any] = {"supported_color_modes": list(modes), "supported_features": features}
     if "color_temp" in modes:
         attrs["min_color_temp_kelvin"] = min_kelvin
@@ -61,9 +61,9 @@ async def setup_integration(
     groups: dict[str, dict[str, Any]] | None = None,
     global_options: dict[str, Any] | None = None,
 ) -> MockConfigEntry:
-    """Den Eintrag „Light Wrapper“ mit globalen Einstellungen und Lichtgruppen laden.
+    """Load the "Light Wrapper" entry with global settings and light groups.
 
-    groups: {Name: Daten der Gruppe}
+    groups: {name: group data}
     """
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -90,7 +90,7 @@ async def setup_wrapper(
     global_options: dict[str, Any] | None = None,
     **defaults: float | bool,
 ) -> MockConfigEntry:
-    """Eine Lichtgruppe 'Wohnzimmer' anlegen und laden."""
+    """Create and load a light group 'Wohnzimmer'."""
     return await setup_integration(
         hass,
         groups={"Wohnzimmer": {CONF_ENTITIES: entities, **defaults}},
@@ -99,28 +99,28 @@ async def setup_wrapper(
 
 
 async def setup_global(hass: HomeAssistant, **options: float) -> MockConfigEntry:
-    """Nur den Eintrag mit globalen Einstellungen (ohne Gruppen) laden."""
+    """Load only the entry with global settings (no groups)."""
     return await setup_integration(hass, global_options=options)
 
 
 def group_id(entry: MockConfigEntry) -> str:
-    """subentry_id der einzigen Lichtgruppe."""
+    """subentry_id of the only light group."""
     (subentry_id,) = group_subentries(entry)
     return subentry_id
 
 
 def group_data(entry: MockConfigEntry) -> dict[str, Any]:
-    """Gespeicherte Daten der einzigen Lichtgruppe."""
+    """Stored data of the only light group."""
     return dict(entry.subentries[group_id(entry)].data)
 
 
 def group_settings(entry: MockConfigEntry) -> LightWrapperData:
-    """Laufzeit-Einstellungen der einzigen Lichtgruppe."""
+    """Runtime settings of the only light group."""
     return entry.runtime_data.groups[group_id(entry)]
 
 
 def number_entity_id(hass: HomeAssistant, entry: MockConfigEntry, option_key: str) -> str | None:
-    """Entity-ID einer Number-Entität der einzigen Lichtgruppe."""
+    """Entity ID of a number entity of the only light group."""
     return er.async_get(hass).async_get_entity_id(
         "number", DOMAIN, f"{group_id(entry)}_{option_key}"
     )
@@ -129,14 +129,14 @@ def number_entity_id(hass: HomeAssistant, entry: MockConfigEntry, option_key: st
 def global_number_entity_id(
     hass: HomeAssistant, entry: MockConfigEntry, option_key: str
 ) -> str | None:
-    """Entity-ID einer globalen Number-Entität."""
+    """Entity ID of a global number entity."""
     return er.async_get(hass).async_get_entity_id(
         "number", DOMAIN, f"{entry.entry_id}_{option_key}"
     )
 
 
 def switch_entity_id(hass: HomeAssistant, entry: MockConfigEntry, option_key: str) -> str | None:
-    """Entity-ID einer Switch-Entität der einzigen Lichtgruppe."""
+    """Entity ID of a switch entity of the only light group."""
     return er.async_get(hass).async_get_entity_id(
         "switch", DOMAIN, f"{group_id(entry)}_{option_key}"
     )
@@ -144,20 +144,20 @@ def switch_entity_id(hass: HomeAssistant, entry: MockConfigEntry, option_key: st
 
 @pytest.fixture
 def member_calls():
-    """Service-Aufrufe an die Mitglieder abfangen statt sie auszuführen.
+    """Intercept service calls to the members instead of executing them.
 
-    Ergebnis: Mock, dessen Aufrufe (self, service, entity_ids, data) enthalten.
+    Result: a mock whose calls contain (self, service, entity_ids, data).
     """
     with patch.object(LightWrapperLight, "_async_call", autospec=True) as mock:
         yield mock
 
 
 def calls_by_entity(mock) -> dict[str, tuple[str, dict[str, Any]]]:
-    """Aufrufe pro Mitglied: {entity_id: (service, data)}."""
+    """Calls per member: {entity_id: (service, data)}."""
     result: dict[str, tuple[str, dict[str, Any]]] = {}
     for call in mock.call_args_list:
         _self, service, entity_ids, data = call.args
         for entity_id in entity_ids:
-            assert entity_id not in result, f"{entity_id} wurde mehrfach angesprochen"
+            assert entity_id not in result, f"{entity_id} was called more than once"
             result[entity_id] = (service, dict(data))
     return result

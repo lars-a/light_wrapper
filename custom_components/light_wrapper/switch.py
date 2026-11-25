@@ -1,4 +1,4 @@
-"""Switch-Plattform: Standardwerte auch bei schon eingeschalteter Gruppe anwenden."""
+"""Switch platform: apply defaults even if the group is already on."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ async def async_setup_entry(
     entry: LightWrapperConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Einen Schalter pro Lichtgruppe anlegen."""
+    """Create one switch per light group."""
     for subentry_id in entry.runtime_data.groups:
         async_add_entities(
             [ApplyWhenOnSwitch(entry, subentry_id)], config_subentry_id=subentry_id
@@ -26,10 +26,10 @@ async def async_setup_entry(
 
 
 class ApplyWhenOnSwitch(LightWrapperSettingEntity, SwitchEntity):
-    """An: ein turn_on ohne Parameter setzt auch bei eingeschalteter Gruppe die Standardwerte.
+    """On: a turn_on without parameters applies the defaults even if the group is on.
 
-    Standardmäßig an. Der Wert steht nur in den Einstellungen der Gruppe,
-    wenn der Schalter aus ist.
+    On by default. The value is only stored in the group's settings when the
+    switch is off.
     """
 
     _option_key = CONF_APPLY_WHEN_ON

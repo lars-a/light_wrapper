@@ -4,8 +4,7 @@ Home-Assistant-Custom-Integration (Domain `light_wrapper`), installiert über HA
 
 Sprache:
 
-- Commit-Messages sind auf **Englisch**.
-- Code-Kommentare und Docstrings sind auf Deutsch.
+- Commit-Messages, Code-Kommentare und Docstrings (auch in den Tests) sind auf **Englisch**.
 - README gibt es zweimal: `README.md` (Englisch, wird von GitHub und HACS/Marketplace angezeigt) und `README.de.md` (Deutsch). Bei jeder Änderung **beide** pflegen; oben verlinken sie einander.
 - Mit dem Nutzer wird Deutsch gesprochen.
 

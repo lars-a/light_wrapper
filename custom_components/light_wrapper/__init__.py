@@ -1,7 +1,7 @@
-"""Light Wrapper: fasst mehrere Lichter zu einer Lichtentität mit Standardwerten zusammen.
+"""Light Wrapper: combines several lights into one light entity with defaults.
 
-Es gibt genau einen Config Entry. Seine Optionen sind die globalen Einstellungen
-(Standard-Übergangszeiten für alle Gruppen); jede Lichtgruppe ist ein Untereintrag.
+There is exactly one config entry. Its options are the global settings
+(default transitions for all groups); each light group is a subentry.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.NUMBER, Platform.SWITCH]
 
 @dataclass
 class LightWrapperData:
-    """Einstellungen einer Lichtgruppe oder die globalen Einstellungen."""
+    """Settings of a light group or the global settings."""
 
     entities: list[str]
     defaults: dict[str, float]
@@ -39,7 +39,7 @@ class LightWrapperData:
 
     @callback
     def async_add_listener(self, update_callback: Callable[[], None]) -> Callable[[], None]:
-        """Callback registrieren, der bei geänderten Einstellungen aufgerufen wird."""
+        """Register a callback that is called when the settings change."""
         self._listeners.append(update_callback)
 
         @callback
@@ -51,7 +51,7 @@ class LightWrapperData:
 
     @callback
     def async_set_settings(self, defaults: dict[str, float], apply_when_on: bool) -> None:
-        """Standardwerte und Verhalten bei eingeschalteter Gruppe ersetzen, Listener informieren."""
+        """Replace the defaults and the behavior when on, then notify listeners."""
         self.defaults = defaults
         self.apply_when_on = apply_when_on
         for update_callback in list(self._listeners):
@@ -60,10 +60,10 @@ class LightWrapperData:
 
 @dataclass
 class LightWrapperRuntime:
-    """Laufzeitdaten des Config Entries."""
+    """Runtime data of the config entry."""
 
     global_settings: LightWrapperData
-    groups: dict[str, LightWrapperData]  # subentry_id -> Einstellungen
+    groups: dict[str, LightWrapperData]  # subentry_id -> settings
     structure: Hashable
 
 
@@ -71,10 +71,10 @@ type LightWrapperConfigEntry = ConfigEntry[LightWrapperRuntime]
 
 
 def normalize_default(key: str, value: Any) -> float | int:
-    """Standardwert ins gespeicherte Format bringen.
+    """Convert a default value to its stored format.
 
-    Übergangszeiten: Sekunden, auf 0,1 s gerundet und auf 0–10 s begrenzt.
-    Alles andere: ganze Zahl.
+    Transitions: seconds, rounded to 0.1 s and limited to 0–10 s.
+    Everything else: integer.
     """
     if key in TRANSITION_KEYS:
         seconds = round(round(float(value) / TRANSITION_STEP) * TRANSITION_STEP, 1)
@@ -83,7 +83,7 @@ def normalize_default(key: str, value: Any) -> float | int:
 
 
 def defaults_from_options(options: Mapping[str, Any]) -> dict[str, float]:
-    """Nur gesetzte Standardwerte übernehmen."""
+    """Take over only the defaults that are set."""
     return {
         key: normalize_default(key, options[key])
         for key in DEFAULT_KEYS
@@ -92,12 +92,12 @@ def defaults_from_options(options: Mapping[str, Any]) -> dict[str, float]:
 
 
 def apply_when_on_from_options(options: Mapping[str, Any]) -> bool:
-    """Schalter „auch wenn an“; fehlt er, gilt der Standard (an)."""
+    """The "apply when on" switch; if it is missing, the default (on) applies."""
     return bool(options.get(CONF_APPLY_WHEN_ON, DEFAULT_APPLY_WHEN_ON))
 
 
 def group_subentries(entry: ConfigEntry) -> dict[str, ConfigSubentry]:
-    """Alle Lichtgruppen des Eintrags."""
+    """All light groups of the entry."""
     return {
         subentry_id: subentry
         for subentry_id, subentry in entry.subentries.items()
@@ -114,11 +114,11 @@ def _group_settings(subentry: ConfigSubentry) -> LightWrapperData:
 
 
 def _structure(entry: ConfigEntry) -> Hashable:
-    """Alles, was beim Ändern ein Neuladen erfordert.
+    """Everything that requires a reload when it changes.
 
-    Das sind: welche Gruppen es gibt, ihre Namen und Lichter sowie welche
-    Standardwerte aktiv sind (davon hängen die Number-Entitäten ab).
-    Reine Wertänderungen gehören nicht dazu.
+    That is: which groups exist, their names and lights, and which defaults
+    are enabled (the number entities depend on that).
+    Pure value changes are not part of it.
     """
     return (
         frozenset(defaults_from_options(entry.options)),
@@ -135,7 +135,7 @@ def _structure(entry: ConfigEntry) -> Hashable:
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry) -> bool:
-    """Config Entry einrichten."""
+    """Set up the config entry."""
     entry.runtime_data = LightWrapperRuntime(
         global_settings=LightWrapperData(entities=[], defaults=defaults_from_options(entry.options)),
         groups={
@@ -150,12 +150,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry)
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigEntry) -> None:
-    """Auf geänderte Einstellungen reagieren.
+    """React to changed settings.
 
-    Ändern sich nur Werte (z. B. über die Number-Entitäten oder den Schalter
-    „auch wenn an“), wird nicht neu geladen, damit die Lichtentitäten nicht kurz
-    verschwinden. Wird eine Gruppe angelegt, gelöscht oder umbenannt, ändern sich
-    ihre Lichter oder wird ein Standardwert an- bzw. abgeschaltet, wird neu geladen.
+    If only values change (e.g. via the number entities or the "apply when on"
+    switch), nothing is reloaded, so the light entities do not disappear briefly.
+    If a group is added, removed or renamed, its lights change, or a default is
+    enabled or disabled, the entry is reloaded.
     """
     runtime = entry.runtime_data
     if _structure(entry) != runtime.structure:
@@ -172,5 +172,5 @@ async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigE
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry) -> bool:
-    """Config Entry entladen."""
+    """Unload the config entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

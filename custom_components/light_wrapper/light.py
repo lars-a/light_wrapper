@@ -1,4 +1,4 @@
-"""Licht-Plattform: Gruppe mehrerer Lichter mit Standardwerten beim Einschalten."""
+"""Light platform: group of several lights with defaults when turning on."""
 
 from __future__ import annotations
 
@@ -53,9 +53,9 @@ from .const import (
 )
 from .entity import device_info
 
-# Parameter, die eine Helligkeit vorgeben -> Standardhelligkeit wird nicht angewendet
+# Parameters that set a brightness -> default brightness is not applied
 BRIGHTNESS_PARAMS = {ATTR_BRIGHTNESS, ATTR_WHITE}
-# Parameter, die eine Farbe/Farbtemperatur vorgeben -> Standard-Farbtemperatur wird nicht angewendet
+# Parameters that set a color/color temperature -> default color temperature is not applied
 COLOR_PARAMS = {
     ATTR_COLOR_TEMP_KELVIN,
     ATTR_HS_COLOR,
@@ -67,16 +67,16 @@ COLOR_PARAMS = {
     ATTR_EFFECT,
 }
 
-# Parameter, die bei schon eingeschalteter Gruppe noch als „ohne Parameter“ gelten
+# Parameters that still count as "no parameters" when the group is already on
 PASSIVE_PARAMS = {ATTR_TRANSITION}
-# Parameter, bei denen keine Standard-Übergangszeit ergänzt wird
+# Parameters for which no default transition is added
 TRANSITION_PARAMS = {ATTR_TRANSITION, ATTR_FLASH}
 
 SUPPORTED_FEATURES_MASK = (
     LightEntityFeature.EFFECT | LightEntityFeature.FLASH | LightEntityFeature.TRANSITION
 )
 
-# Reihenfolge, falls kein Mitglied einen passenden Farbmodus meldet
+# Order used if no member reports a matching color mode
 COLOR_MODE_FALLBACK_ORDER = (
     ColorMode.COLOR_TEMP,
     ColorMode.HS,
@@ -95,7 +95,7 @@ async def async_setup_entry(
     entry: LightWrapperConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Eine Lichtentität pro Lichtgruppe anlegen."""
+    """Create one light entity per light group."""
     for subentry_id in entry.runtime_data.groups:
         async_add_entities(
             [LightWrapperLight(entry, subentry_id)], config_subentry_id=subentry_id
@@ -133,7 +133,7 @@ def _to_color_mode(value: Any) -> ColorMode | None:
 
 
 def _filter_color_modes(modes: set[ColorMode]) -> set[ColorMode]:
-    """ONOFF/BRIGHTNESS dürfen nicht mit reicheren Modi kombiniert werden."""
+    """ONOFF/BRIGHTNESS must not be combined with richer modes."""
     simple = {ColorMode.ONOFF, ColorMode.BRIGHTNESS}
     if modes - simple:
         return modes - simple
@@ -146,7 +146,7 @@ def _filter_color_modes(modes: set[ColorMode]) -> set[ColorMode]:
 
 
 class LightWrapperLight(LightEntity):
-    """Lichtgruppe, die sich wie ein normales Licht verhält."""
+    """Light group that behaves like a regular light."""
 
     _attr_has_entity_name = True
     _attr_name = None
@@ -194,7 +194,7 @@ class LightWrapperLight(LightEntity):
         self._attr_available = any(s.state != STATE_UNAVAILABLE for s in states)
         self._attr_is_on = bool(on_states) if valid else None
 
-        # Werte der eingeschalteten Mitglieder mitteln
+        # Average the values of the members that are on
         self._attr_brightness = _mean_int(_values(on_states, ATTR_BRIGHTNESS))
         self._attr_color_temp_kelvin = _mean_int(_values(on_states, ATTR_COLOR_TEMP_KELVIN))
         self._attr_hs_color = _mean_tuple(_values(on_states, ATTR_HS_COLOR))
@@ -203,13 +203,13 @@ class LightWrapperLight(LightEntity):
         self._attr_rgbw_color = _mean_tuple(_values(on_states, ATTR_RGBW_COLOR), as_int=True)
         self._attr_rgbww_color = _mean_tuple(_values(on_states, ATTR_RGBWW_COLOR), as_int=True)
 
-        # Farbtemperatur-Bereich über alle Mitglieder
+        # Color temperature range across all members
         if mins := _values(states, ATTR_MIN_COLOR_TEMP_KELVIN):
             self._attr_min_color_temp_kelvin = min(mins)
         if maxs := _values(states, ATTR_MAX_COLOR_TEMP_KELVIN):
             self._attr_max_color_temp_kelvin = max(maxs)
 
-        # Effekte
+        # Effects
         effect_lists = _values(states, ATTR_EFFECT_LIST)
         self._attr_effect_list = (
             list(dict.fromkeys(itertools.chain.from_iterable(effect_lists))) or None
@@ -217,7 +217,7 @@ class LightWrapperLight(LightEntity):
         effects = _values(on_states, ATTR_EFFECT)
         self._attr_effect = Counter(effects).most_common(1)[0][0] if effects else None
 
-        # Farbmodi
+        # Color modes
         modes: set[ColorMode] = set()
         for state in states:
             for raw in state.attributes.get(ATTR_SUPPORTED_COLOR_MODES) or []:
@@ -229,7 +229,7 @@ class LightWrapperLight(LightEntity):
             self._pick_color_mode(on_states, supported) if self._attr_is_on else None
         )
 
-        # Features (Effekt, Flash, Transition)
+        # Features (effect, flash, transition)
         features = 0
         for state in states:
             features |= int(state.attributes.get(ATTR_SUPPORTED_FEATURES, 0))
@@ -256,12 +256,12 @@ class LightWrapperLight(LightEntity):
     # ----------------------------------------------------------------- actions
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Einschalten mit Standardwerten.
+        """Turn on with defaults.
 
-        War die Gruppe aus, gilt jeder Standardwert, dessen Größe nicht vorgegeben ist.
-        Ist sie schon an, gelten die Standardwerte nur, wenn der Schalter „auch wenn an“
-        aktiv ist und außer einem Übergang keine Parameter angegeben sind.
-        Die Standard-Übergangszeit gilt für jedes Einschalten ohne transition/flash.
+        If the group was off, every default whose quantity is not given applies.
+        If it is already on, the defaults only apply if the "apply when on" switch
+        is on and no parameters except a transition are given.
+        The default transition applies to every turn-on without transition/flash.
         """
         defaults = self._data.defaults
         apply_defaults = self.is_on is not True or (
@@ -293,7 +293,7 @@ class LightWrapperLight(LightEntity):
         await self._async_call_members(SERVICE_TURN_ON, payload)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Ausschalten; ohne transition/flash mit der Standard-Übergangszeit."""
+        """Turn off; without transition/flash, use the default transition."""
         transition = self._default_transition(CONF_DEFAULT_TRANSITION_OFF, kwargs)
         await self._async_call_members(
             SERVICE_TURN_OFF,
@@ -301,9 +301,9 @@ class LightWrapperLight(LightEntity):
         )
 
     def _default_transition(self, key: str, kwargs: dict[str, Any]) -> float | None:
-        """Eigene Standard-Übergangszeit der Gruppe, sonst die globale.
+        """The group's own default transition, otherwise the global one.
 
-        Keine, wenn im Aufruf schon transition oder flash steht.
+        None if the call already contains transition or flash.
         """
         if kwargs.keys() & TRANSITION_PARAMS:
             return None
@@ -314,7 +314,7 @@ class LightWrapperLight(LightEntity):
     def _with_transition(
         self, entity_id: str, kwargs: dict[str, Any], transition: float | None
     ) -> dict[str, Any]:
-        """Aufrufdaten für ein Mitglied; Übergang nur, wenn es Übergänge unterstützt."""
+        """Call data for a member; transition only if it supports transitions."""
         data = dict(kwargs)
         if transition is not None and self._member_supports_transition(entity_id):
             data[ATTR_TRANSITION] = transition
@@ -329,7 +329,7 @@ class LightWrapperLight(LightEntity):
     async def _async_call_members(
         self, service: str, payload: Callable[[str], dict[str, Any]]
     ) -> None:
-        """Mitglieder mit identischem Payload in einem Aufruf zusammenfassen."""
+        """Combine members with an identical payload into one call."""
         batches: dict[str, tuple[dict[str, Any], list[str]]] = {}
         for entity_id in self._entity_ids:
             data = payload(entity_id)
@@ -344,7 +344,7 @@ class LightWrapperLight(LightEntity):
         )
 
     def _member_color_temp(self, entity_id: str, kelvin: int) -> int | None:
-        """Farbtemperatur nur für Mitglieder, die sie unterstützen; auf deren Bereich begrenzt."""
+        """Color temperature only for members that support it, limited to their range."""
         state = self.hass.states.get(entity_id)
         if state is None:
             return None

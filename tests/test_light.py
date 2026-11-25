@@ -1,4 +1,4 @@
-"""Tests für die Lichtentität des Wrappers."""
+"""Tests for the wrapper's light entity."""
 
 from __future__ import annotations
 
@@ -37,8 +37,8 @@ from .conftest import (
     setup_wrapper,
 )
 
-CT_LIGHT = "light.decke"  # kann Farbtemperatur (2200–6500 K)
-DIM_LIGHT = "light.stehlampe"  # nur dimmbar
+CT_LIGHT = "light.decke"  # supports color temperature (2200–6500 K)
+DIM_LIGHT = "light.stehlampe"  # dimmable only
 
 
 async def _turn_on(hass: HomeAssistant, **data) -> None:
@@ -47,7 +47,7 @@ async def _turn_on(hass: HomeAssistant, **data) -> None:
     )
 
 
-# --------------------------------------------------------------------------- Zustand
+# --------------------------------------------------------------------------- State
 
 
 async def test_state_aggregation(hass: HomeAssistant) -> None:
@@ -106,7 +106,7 @@ async def test_defaults_shown_as_attributes(hass: HomeAssistant) -> None:
     assert attrs[CONF_DEFAULT_COLOR_TEMP] == 2700
 
 
-# --------------------------------------------------------------------------- Einschalten
+# --------------------------------------------------------------------------- Turning on
 
 
 async def test_turn_on_without_params_uses_defaults(hass: HomeAssistant, member_calls) -> None:
@@ -123,7 +123,7 @@ async def test_turn_on_without_params_uses_defaults(hass: HomeAssistant, member_
         SERVICE_TURN_ON,
         {ATTR_BRIGHTNESS_PCT: 60, ATTR_COLOR_TEMP_KELVIN: 2700},
     )
-    # Nur dimmbares Licht bekommt keine Farbtemperatur
+    # The dimmable-only light gets no color temperature
     assert calls[DIM_LIGHT] == (SERVICE_TURN_ON, {ATTR_BRIGHTNESS_PCT: 60})
 
 
@@ -147,8 +147,8 @@ async def test_given_brightness_wins_but_color_default_applies(
     await _turn_on(hass, brightness_pct=30)
 
     _service, data = calls_by_entity(member_calls)[CT_LIGHT]
-    assert ATTR_BRIGHTNESS_PCT not in data  # Standard nicht angewendet
-    assert data[ATTR_BRIGHTNESS] in (76, 77)  # 30 % von HA in 0–255 umgerechnet
+    assert ATTR_BRIGHTNESS_PCT not in data  # default not applied
+    assert data[ATTR_BRIGHTNESS] in (76, 77)  # 30 % converted to 0–255 by HA
     assert data[ATTR_COLOR_TEMP_KELVIN] == 2700
 
 
@@ -196,7 +196,7 @@ async def test_no_defaults_when_already_on_with_switch_off(
 async def test_defaults_when_already_on_by_default(hass: HomeAssistant, member_calls) -> None:
     set_member(hass, CT_LIGHT, "on", brightness=20, kelvin=5000)
     set_member(hass, DIM_LIGHT, "on", modes=("brightness",), brightness=20)
-    # Schalter nicht gespeichert -> Standard (an)
+    # switch not stored -> default (on)
     await setup_wrapper(
         hass, [CT_LIGHT, DIM_LIGHT], **{CONF_DEFAULT_BRIGHTNESS: 60, CONF_DEFAULT_COLOR_TEMP: 2700}
     )
@@ -236,7 +236,7 @@ async def test_already_on_with_switch_but_params_given(hass: HomeAssistant, memb
         **{CONF_DEFAULT_BRIGHTNESS: 60, CONF_DEFAULT_COLOR_TEMP: 2700, CONF_APPLY_WHEN_ON: True},
     )
 
-    # Nur die Helligkeit ändern: Farbtemperatur bleibt, wie sie ist
+    # Change only the brightness: color temperature stays as it is
     await _turn_on(hass, brightness=100)
 
     assert calls_by_entity(member_calls)[CT_LIGHT] == (SERVICE_TURN_ON, {ATTR_BRIGHTNESS: 100})
@@ -249,7 +249,7 @@ async def test_turn_on_without_defaults_passes_through(hass: HomeAssistant, memb
 
     await _turn_on(hass)
 
-    assert member_calls.call_count == 1  # ein gemeinsamer Aufruf für alle
+    assert member_calls.call_count == 1  # one shared call for all
     calls = calls_by_entity(member_calls)
     assert calls[CT_LIGHT] == (SERVICE_TURN_ON, {})
     assert calls[DIM_LIGHT] == (SERVICE_TURN_ON, {})
@@ -270,7 +270,7 @@ async def test_members_with_same_payload_share_one_call(hass: HomeAssistant, mem
     assert member_calls.call_count == 2
 
 
-# --------------------------------------------------------------------------- Ausschalten
+# --------------------------------------------------------------------------- Turning off
 
 
 async def test_turn_off_passes_transition(hass: HomeAssistant, member_calls) -> None:
@@ -291,7 +291,7 @@ async def test_turn_off_passes_transition(hass: HomeAssistant, member_calls) -> 
     assert calls[DIM_LIGHT] == (SERVICE_TURN_OFF, {ATTR_TRANSITION: 2})
 
 
-# --------------------------------------------------------------------------- Übergangszeiten
+# --------------------------------------------------------------------------- Transitions
 
 TRANSITION = int(LightEntityFeature.TRANSITION)
 
@@ -304,7 +304,7 @@ async def _turn_off(hass: HomeAssistant, **data) -> None:
 
 async def test_own_transitions_for_on_and_off(hass: HomeAssistant, member_calls) -> None:
     set_member(hass, CT_LIGHT, "off", features=TRANSITION)
-    set_member(hass, DIM_LIGHT, "off", modes=("brightness",))  # kann keine Übergänge
+    set_member(hass, DIM_LIGHT, "off", modes=("brightness",))  # no transition support
     await setup_wrapper(
         hass,
         [CT_LIGHT, DIM_LIGHT],
@@ -337,7 +337,7 @@ async def test_global_transition_applies_without_own(hass: HomeAssistant, member
 
     member_calls.reset_mock()
     await _turn_off(hass)
-    # Eigener Wert der Gruppe geht vor
+    # The group's own value takes precedence
     assert calls_by_entity(member_calls)[CT_LIGHT] == (SERVICE_TURN_OFF, {ATTR_TRANSITION: 4.0})
 
 
@@ -385,7 +385,7 @@ async def test_global_transition_change_applies_without_reload(
 
     hass.config_entries.async_update_entry(entry, options={CONF_DEFAULT_TRANSITION_ON: 3.0})
     await hass.async_block_till_done()
-    assert entry.runtime_data is runtime_before  # kein Reload
+    assert entry.runtime_data is runtime_before  # no reload
 
     await _turn_on(hass)
     assert calls_by_entity(member_calls)[CT_LIGHT] == (SERVICE_TURN_ON, {ATTR_TRANSITION: 3.0})

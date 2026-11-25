@@ -1,4 +1,4 @@
-"""Number-Plattform: Standardwerte direkt in der Oberfläche und in Automationen einstellen."""
+"""Number platform: set defaults directly in the UI and in automations."""
 
 from __future__ import annotations
 
@@ -32,9 +32,9 @@ async def async_setup_entry(
     entry: LightWrapperConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Nur für aktivierte Standardwerte eine Number-Entität anlegen.
+    """Create a number entity only for enabled defaults.
 
-    Global gibt es nur die Übergangszeiten, bei Gruppen alle Standardwerte.
+    Globally there are only the transitions; groups have all defaults.
     """
     runtime = entry.runtime_data
     async_add_entities(
@@ -54,7 +54,7 @@ async def async_setup_entry(
 
 
 class _DefaultValueNumber(LightWrapperSettingEntity, NumberEntity):
-    """Standardwert als Slider; Änderungen werden in den Einstellungen gespeichert."""
+    """Default value as a slider; changes are stored in the settings."""
 
     _attr_mode = NumberMode.SLIDER
 
@@ -77,10 +77,10 @@ class DefaultBrightnessNumber(_DefaultValueNumber):
 
 
 class DefaultColorTempNumber(_DefaultValueNumber):
-    """Nur verfügbar, wenn mindestens ein Mitglied Farbtemperatur unterstützt.
+    """Only available if at least one member supports color temperature.
 
-    Der Bereich ist der gemeinsame Bereich aller Mitglieder mit Farbtemperatur
-    und wird bei jeder Zustandsänderung eines Mitglieds neu bestimmt.
+    The range is the common range of all members with color temperature and
+    is recalculated on every state change of a member.
     """
 
     _option_key = CONF_DEFAULT_COLOR_TEMP
@@ -117,7 +117,7 @@ class DefaultColorTempNumber(_DefaultValueNumber):
 
 
 class _DefaultTransitionNumber(_DefaultValueNumber):
-    """Standard-Übergangszeit in Sekunden (0–10 s, 0,1-s-Schritte)."""
+    """Default transition in seconds (0–10 s, 0.1 s steps)."""
 
     _attr_icon = "mdi:timer-outline"
     _attr_native_min_value = MIN_TRANSITION
