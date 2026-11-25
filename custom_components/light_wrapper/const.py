@@ -4,12 +4,12 @@ from __future__ import annotations
 
 DOMAIN = "light_wrapper"
 
-# Art des Config Entries (steht in entry.data). Fehlt sie, ist es eine Lichtgruppe.
-CONF_ENTRY_TYPE = "entry_type"
-ENTRY_TYPE_GLOBAL = "global"
-GLOBAL_UNIQUE_ID = "global"
+# Es gibt genau einen Config Entry („Light Wrapper“). Seine Optionen sind die
+# globalen Einstellungen; jede Lichtgruppe ist ein Untereintrag (Subentry).
+SUBENTRY_TYPE_GROUP = "light_group"
+ENTRY_TITLE = "Light Wrapper"
 
-# Option keys (werden in entry.options gespeichert)
+# Schlüssel der Einstellungen (globale in entry.options, Gruppen in subentry.data)
 CONF_DEFAULT_BRIGHTNESS = "default_brightness_pct"
 CONF_DEFAULT_COLOR_TEMP = "default_color_temp_kelvin"
 CONF_DEFAULT_TRANSITION_ON = "default_transition_on"

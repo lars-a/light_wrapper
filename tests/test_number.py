@@ -18,7 +18,15 @@ from custom_components.light_wrapper.const import (
     CONF_DEFAULT_TRANSITION_ON,
 )
 
-from .conftest import WRAPPER_ID, number_entity_id, set_member, setup_global, setup_wrapper
+from .conftest import (
+    WRAPPER_ID,
+    global_number_entity_id,
+    group_data,
+    number_entity_id,
+    set_member,
+    setup_global,
+    setup_wrapper,
+)
 
 CT_LIGHT = "light.decke"
 DIM_LIGHT = "light.stehlampe"
@@ -50,8 +58,8 @@ async def test_set_value_updates_options_without_reload(hass: HomeAssistant) -> 
     )
     await hass.async_block_till_done()
 
-    assert entry.options[CONF_DEFAULT_BRIGHTNESS] == 35
-    assert entry.options[CONF_DEFAULT_COLOR_TEMP] == 2700
+    assert group_data(entry)[CONF_DEFAULT_BRIGHTNESS] == 35
+    assert group_data(entry)[CONF_DEFAULT_COLOR_TEMP] == 2700
     assert entry.state is ConfigEntryState.LOADED
     assert entry.runtime_data is runtime_before  # kein Reload
     assert float(hass.states.get(brightness_id).state) == 35
@@ -125,7 +133,7 @@ async def test_transition_number_set_value(hass: HomeAssistant) -> None:
     )
     await hass.async_block_till_done()
 
-    assert entry.options[CONF_DEFAULT_TRANSITION_ON] == 2.5
+    assert group_data(entry)[CONF_DEFAULT_TRANSITION_ON] == 2.5
     assert float(hass.states.get(on_id).state) == 2.5
 
 
@@ -134,7 +142,8 @@ async def test_global_transition_numbers(hass: HomeAssistant) -> None:
         hass, **{CONF_DEFAULT_TRANSITION_ON: 0.5, CONF_DEFAULT_TRANSITION_OFF: 2.0}
     )
     runtime_before = entry.runtime_data
-    off_id = number_entity_id(hass, entry, CONF_DEFAULT_TRANSITION_OFF)
+    off_id = global_number_entity_id(hass, entry, CONF_DEFAULT_TRANSITION_OFF)
+    assert global_number_entity_id(hass, entry, CONF_DEFAULT_TRANSITION_ON) is not None
     assert float(hass.states.get(off_id).state) == 2.0
 
     await hass.services.async_call(

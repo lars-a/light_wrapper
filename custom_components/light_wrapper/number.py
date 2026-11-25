@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from homeassistant.components.light import ATTR_SUPPORTED_COLOR_MODES, ColorMode
 from homeassistant.components.number import NumberEntity, NumberMode
-from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTemperature, UnitOfTime
+from homeassistant.const import PERCENTAGE, UnitOfTemperature, UnitOfTime
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
@@ -21,9 +21,10 @@ from .const import (
     MIN_BRIGHTNESS_PCT,
     MIN_COLOR_TEMP_KELVIN,
     MIN_TRANSITION,
+    TRANSITION_KEYS,
     TRANSITION_STEP,
 )
-from .entity import color_temp_range, device_info
+from .entity import LightWrapperSettingEntity, color_temp_range
 
 
 async def async_setup_entry(
@@ -33,47 +34,36 @@ async def async_setup_entry(
 ) -> None:
     """Nur für aktivierte Standardwerte eine Number-Entität anlegen.
 
-    Gilt für Lichtgruppen und für den Eintrag „Globale Einstellungen“
-    (dort gibt es nur die Übergangszeiten).
+    Global gibt es nur die Übergangszeiten, bei Gruppen alle Standardwerte.
     """
-    defaults = entry.runtime_data.defaults
+    runtime = entry.runtime_data
     async_add_entities(
-        number_class(entry)
-        for key, number_class in _NUMBER_CLASSES.items()
-        if key in defaults
+        _NUMBER_CLASSES[key](entry, None)
+        for key in TRANSITION_KEYS
+        if key in runtime.global_settings.defaults
     )
+    for subentry_id, data in runtime.groups.items():
+        async_add_entities(
+            (
+                number_class(entry, subentry_id)
+                for key, number_class in _NUMBER_CLASSES.items()
+                if key in data.defaults
+            ),
+            config_subentry_id=subentry_id,
+        )
 
 
-class _DefaultValueNumber(NumberEntity):
-    """Basisklasse: Wert liegt in entry.options, Änderungen werden dort gespeichert."""
+class _DefaultValueNumber(LightWrapperSettingEntity, NumberEntity):
+    """Standardwert als Slider; Änderungen werden in den Einstellungen gespeichert."""
 
-    _attr_has_entity_name = True
-    _attr_should_poll = False
-    _attr_entity_category = EntityCategory.CONFIG
     _attr_mode = NumberMode.SLIDER
-    _option_key: str
-
-    def __init__(self, entry: LightWrapperConfigEntry) -> None:
-        self._entry = entry
-        self._data = entry.runtime_data
-        self._attr_unique_id = f"{entry.entry_id}_{self._option_key}"
-        self._attr_device_info = device_info(entry)
 
     @property
     def native_value(self) -> float | None:
         return self._data.defaults.get(self._option_key)
 
-    async def async_added_to_hass(self) -> None:
-        self.async_on_remove(self._data.async_add_listener(self.async_write_ha_state))
-
     async def async_set_native_value(self, value: float) -> None:
-        self.hass.config_entries.async_update_entry(
-            self._entry,
-            options={
-                **self._entry.options,
-                self._option_key: normalize_default(self._option_key, value),
-            },
-        )
+        self._store(normalize_default(self._option_key, value))
 
 
 class DefaultBrightnessNumber(_DefaultValueNumber):

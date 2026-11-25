@@ -8,16 +8,14 @@ from unittest.mock import patch
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from homeassistant.config_entries import ConfigSubentryData
+
 from homeassistant.const import CONF_ENTITIES
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
-from custom_components.light_wrapper.const import (
-    CONF_ENTRY_TYPE,
-    DOMAIN,
-    ENTRY_TYPE_GLOBAL,
-    GLOBAL_UNIQUE_ID,
-)
+from custom_components.light_wrapper import LightWrapperData, group_subentries
+from custom_components.light_wrapper.const import DOMAIN, ENTRY_TITLE, SUBENTRY_TYPE_GROUP
 from custom_components.light_wrapper.light import LightWrapperLight
 
 WRAPPER_ID = "light.wohnzimmer"
@@ -58,48 +56,89 @@ def set_member(
     hass.states.async_set(entity_id, state, attrs)
 
 
-async def setup_wrapper(
-    hass: HomeAssistant, entities: list[str], **defaults: float | bool
+async def setup_integration(
+    hass: HomeAssistant,
+    groups: dict[str, dict[str, Any]] | None = None,
+    global_options: dict[str, Any] | None = None,
 ) -> MockConfigEntry:
-    """Einen Wrapper 'Wohnzimmer' anlegen und laden."""
+    """Den Eintrag „Light Wrapper“ mit globalen Einstellungen und Lichtgruppen laden.
+
+    groups: {Name: Daten der Gruppe}
+    """
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="Wohnzimmer",
+        title=ENTRY_TITLE,
         data={},
-        options={CONF_ENTITIES: entities, **defaults},
+        options=global_options or {},
+        subentries_data=[
+            ConfigSubentryData(
+                data=data, subentry_type=SUBENTRY_TYPE_GROUP, title=title, unique_id=None
+            )
+            for title, data in (groups or {}).items()
+        ],
     )
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     return entry
+
+
+async def setup_wrapper(
+    hass: HomeAssistant,
+    entities: list[str],
+    *,
+    global_options: dict[str, Any] | None = None,
+    **defaults: float | bool,
+) -> MockConfigEntry:
+    """Eine Lichtgruppe 'Wohnzimmer' anlegen und laden."""
+    return await setup_integration(
+        hass,
+        groups={"Wohnzimmer": {CONF_ENTITIES: entities, **defaults}},
+        global_options=global_options,
+    )
 
 
 async def setup_global(hass: HomeAssistant, **options: float) -> MockConfigEntry:
-    """Den Eintrag „Globale Einstellungen“ anlegen und laden."""
-    entry = MockConfigEntry(
-        domain=DOMAIN,
-        title="Globale Einstellungen",
-        unique_id=GLOBAL_UNIQUE_ID,
-        data={CONF_ENTRY_TYPE: ENTRY_TYPE_GLOBAL},
-        options=options,
-    )
-    entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
-    return entry
+    """Nur den Eintrag mit globalen Einstellungen (ohne Gruppen) laden."""
+    return await setup_integration(hass, global_options=options)
+
+
+def group_id(entry: MockConfigEntry) -> str:
+    """subentry_id der einzigen Lichtgruppe."""
+    (subentry_id,) = group_subentries(entry)
+    return subentry_id
+
+
+def group_data(entry: MockConfigEntry) -> dict[str, Any]:
+    """Gespeicherte Daten der einzigen Lichtgruppe."""
+    return dict(entry.subentries[group_id(entry)].data)
+
+
+def group_settings(entry: MockConfigEntry) -> LightWrapperData:
+    """Laufzeit-Einstellungen der einzigen Lichtgruppe."""
+    return entry.runtime_data.groups[group_id(entry)]
 
 
 def number_entity_id(hass: HomeAssistant, entry: MockConfigEntry, option_key: str) -> str | None:
-    """Entity-ID einer Number-Entität über ihre unique_id finden."""
+    """Entity-ID einer Number-Entität der einzigen Lichtgruppe."""
+    return er.async_get(hass).async_get_entity_id(
+        "number", DOMAIN, f"{group_id(entry)}_{option_key}"
+    )
+
+
+def global_number_entity_id(
+    hass: HomeAssistant, entry: MockConfigEntry, option_key: str
+) -> str | None:
+    """Entity-ID einer globalen Number-Entität."""
     return er.async_get(hass).async_get_entity_id(
         "number", DOMAIN, f"{entry.entry_id}_{option_key}"
     )
 
 
 def switch_entity_id(hass: HomeAssistant, entry: MockConfigEntry, option_key: str) -> str | None:
-    """Entity-ID einer Switch-Entität über ihre unique_id finden."""
+    """Entity-ID einer Switch-Entität der einzigen Lichtgruppe."""
     return er.async_get(hass).async_get_entity_id(
-        "switch", DOMAIN, f"{entry.entry_id}_{option_key}"
+        "switch", DOMAIN, f"{group_id(entry)}_{option_key}"
     )
 
 

@@ -11,19 +11,23 @@ Fasst mehrere physische Lichter zu **einer** Lichtentität zusammen, die sich wi
 3. **Light Wrapper** in HACS suchen und herunterladen.
 4. Home Assistant neu starten.
 5. **Einstellungen → Geräte & Dienste → Integrationen → Integration hinzufügen → Light Wrapper**.
-6. **Lichtgruppe** wählen, dann Namen, Lichter und (optional) Standardwerte eingeben.
+   Es wird sofort der Eintrag **Light Wrapper** angelegt, ohne weitere Fragen. Er enthält die globalen Einstellungen.
+6. Auf der Seite der Integration (**Geräte & Dienste → Light Wrapper**) über **Lichtgruppe hinzufügen** Namen, Lichter und (optional) Standardwerte eingeben.
 
-Weitere Wrapper und die **Globalen Einstellungen** legst du auf der Seite der Integration (**Geräte & Dienste → Light Wrapper**) über **Gerät hinzufügen** an. Die Auswahl zwischen „Lichtgruppe“ und „Globale Einstellungen“ erscheint nur, solange es die globalen Einstellungen noch nicht gibt. Dort sind alle Wrapper aufgelistet; über **Konfigurieren** (Zahnrad) öffnest du den Dialog, um Lichter und Standardwerte eines Wrappers zu ändern. Umbenennen geht über das ⋮-Menü des Eintrags.
+Die Seite der Integration ist so aufgebaut:
+
+* **Light Wrapper**: der einzige Eintrag. Über **Konfigurieren** (Zahnrad) stellst du die globalen Einstellungen ein.
+* Darunter die **Lichtgruppen**. Jede hat ein eigenes Gerät; über ihr Bearbeiten-Symbol änderst du Namen, Lichter und Standardwerte, über ihr ⋮-Menü löschst du sie.
 
 ### Manuell
 
 Den Ordner `custom_components/light_wrapper` nach `<config>/custom_components/light_wrapper` kopieren, Home Assistant neu starten und weiter mit Schritt 5.
 
-Benötigt Home Assistant 2025.2 oder neuer. Das Icon der Integration (`custom_components/light_wrapper/brand/`) zeigt Home Assistant ab Version 2026.3 an; ältere Versionen zeigen stattdessen einen Platzhalter.
+Benötigt Home Assistant 2025.3 oder neuer. Das Icon der Integration (`custom_components/light_wrapper/brand/`) zeigt Home Assistant ab Version 2026.3 an; ältere Versionen zeigen stattdessen einen Platzhalter.
 
 ## Was angelegt wird
 
-Pro Wrapper entsteht ein Gerät mit:
+Pro Lichtgruppe entsteht ein Gerät mit:
 
 | Entität | Zweck |
 |---|---|
@@ -34,7 +38,7 @@ Pro Wrapper entsteht ein Gerät mit:
 | `number.<name>_ubergangszeit_ausschalten` | Eigene Übergangszeit beim Ausschalten in s (nur wenn aktiviert) |
 | `switch.<name>_standardwerte_auch_wenn_an` | Standardwerte auch bei schon eingeschalteter Gruppe anwenden (standardmäßig an, siehe unten) |
 
-Über die Number-Entitäten kannst du die Werte im Dashboard oder per Automation ändern, zum Beispiel tagsüber kühl und hell, abends warm und gedimmt. Aktivieren oder deaktivieren lassen sich die Standardwerte unter **Konfigurieren** über die Schalter „… verwenden“; den Wert selbst stellst du dort per Slider ein.
+Über die Number-Entitäten kannst du die Werte im Dashboard oder per Automation ändern, zum Beispiel tagsüber kühl und hell, abends warm und gedimmt. Aktivieren oder deaktivieren lassen sich die Standardwerte im Bearbeiten-Dialog der Gruppe über die Schalter „… verwenden“; den Wert selbst stellst du dort per Slider ein.
 
 Der Bereich der Standard-Farbtemperatur ist der **gemeinsame Bereich** aller Lichter mit Farbtemperatur. Bei einer Lampe mit 2200–6500 K und einer mit 2700–5000 K geht er also von 2700 bis 5000 K, und jeder Wert passt für alle Lampen. Weitere Regeln:
 
@@ -45,13 +49,13 @@ Der Bereich der Standard-Farbtemperatur ist der **gemeinsame Bereich** aller Lic
 
 ## Globale Einstellungen
 
-Den Eintrag **Globale Einstellungen** gibt es höchstens einmal. Er legt Standard-Übergangszeiten für **alle** Lichtgruppen fest, getrennt für Ein- und Ausschalten (je 0–10 s in 0,1-s-Schritten). Für jede aktivierte Übergangszeit gibt es eine Number-Entität (`number.globale_einstellungen_ubergangszeit_einschalten` bzw. `…_ausschalten`).
+Die globalen Einstellungen öffnest du über **Konfigurieren** am Eintrag **Light Wrapper**. Sie legen Standard-Übergangszeiten für **alle** Lichtgruppen fest, getrennt für Ein- und Ausschalten (je 0–10 s in 0,1-s-Schritten). Für jede aktivierte Übergangszeit gibt es eine Number-Entität am Gerät **Globale Einstellungen** (`number.globale_einstellungen_ubergangszeit_einschalten` bzw. `…_ausschalten`).
 
-Jede Gruppe kann unter **Konfigurieren** mit „Eigene Übergangszeit … verwenden“ einen eigenen Wert festlegen. Der eigene Wert geht vor; ohne eigenen Wert gilt der globale, und ohne beides wird keine Übergangszeit gesendet.
+Jede Gruppe kann in ihrem Bearbeiten-Dialog mit „Eigene Übergangszeit … verwenden“ einen eigenen Wert festlegen. Der eigene Wert geht vor; ohne eigenen Wert gilt der globale, und ohne beides wird keine Übergangszeit gesendet.
 
 ## Verhalten beim Einschalten
 
-* Der Schalter **„Standardwerte auch wenn an“** (im Dialog **Konfigurieren** oder als Switch-Entität) ist standardmäßig **an**. Dann setzt ein `turn_on` **ohne Parameter** die Standardwerte auch bei schon eingeschalteter Gruppe. Nur `transition` darf zusätzlich angegeben sein. Kommt eine Helligkeit oder Farbe mit, gilt das normale Verhalten: Bei eingeschalteter Gruppe wird nur der angegebene Wert geändert. Ein Helligkeits-Slider im Dashboard setzt also nicht nebenbei die Farbtemperatur zurück.
+* Der Schalter **„Standardwerte auch wenn an“** (im Bearbeiten-Dialog der Gruppe oder als Switch-Entität) ist standardmäßig **an**. Dann setzt ein `turn_on` **ohne Parameter** die Standardwerte auch bei schon eingeschalteter Gruppe. Nur `transition` darf zusätzlich angegeben sein. Kommt eine Helligkeit oder Farbe mit, gilt das normale Verhalten: Bei eingeschalteter Gruppe wird nur der angegebene Wert geändert. Ein Helligkeits-Slider im Dashboard setzt also nicht nebenbei die Farbtemperatur zurück.
 * Ist der Schalter **aus**, greifen Standardwerte nur, wenn die Gruppe **vorher aus** war. Ein `turn_on` auf ein schon eingeschaltetes Licht ändert dann nichts an Helligkeit oder Farbe.
 * Die **Standardhelligkeit** wird verwendet, wenn keine Helligkeit angegeben ist (`brightness`, `brightness_pct`, `brightness_step`, `white`).
 * Die **Standard-Farbtemperatur** wird verwendet, wenn keine Farbe angegeben ist (`color_temp_kelvin`, `hs_color`, `rgb_color`, `xy_color`, `white`, `effect` …). Sie geht nur an Mitglieder, die Farbtemperatur unterstützen, und wird auf deren Bereich begrenzt.

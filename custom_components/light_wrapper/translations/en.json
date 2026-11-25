@@ -2,88 +2,17 @@
   "config": {
     "step": {
       "user": {
-        "title": "Add Light Wrapper",
-        "description": "What would you like to add?",
-        "menu_options": {
-          "group": "Light group",
-          "global": "Global settings (default transitions for all groups)"
-        }
-      },
-      "group": {
-        "title": "Create Light Wrapper",
-        "description": "Combines several lights into one light entity. Optional defaults are used when the light is turned on without brightness or color.",
-        "data": {
-          "name": "Name",
-          "entities": "Lights",
-          "use_default_brightness": "Use default brightness",
-          "default_brightness_pct": "Default brightness",
-          "use_default_color_temp": "Use default color temperature",
-          "default_color_temp_kelvin": "Default color temperature",
-          "use_default_transition_on": "Use own transition when turning on",
-          "default_transition_on": "Transition when turning on",
-          "use_default_transition_off": "Use own transition when turning off",
-          "default_transition_off": "Transition when turning off",
-          "apply_defaults_when_on": "Apply defaults when already on"
-        },
-        "data_description": {
-          "default_brightness_pct": "Used when the light is turned on without a brightness.",
-          "default_color_temp_kelvin": "Used when the light is turned on without a color; only sent to lights that support color temperature.",
-          "use_default_transition_on": "Off: the global transition applies, if one is set.",
-          "default_transition_on": "Used when turning on without a transition; only sent to lights that support transitions.",
-          "use_default_transition_off": "Off: the global transition applies, if one is set.",
-          "default_transition_off": "Used when turning off without a transition; only sent to lights that support transitions.",
-          "apply_defaults_when_on": "Turning on without parameters also applies the defaults when the group is already on."
-        }
-      },
-      "global": {
-        "title": "Global settings",
-        "description": "These transitions apply to all light groups that do not set their own. They are only used when the call does not specify a transition.",
-        "data": {
-          "use_default_transition_on": "Use transition when turning on",
-          "default_transition_on": "Transition when turning on",
-          "use_default_transition_off": "Use transition when turning off",
-          "default_transition_off": "Transition when turning off"
-        },
-        "data_description": {
-          "default_transition_on": "Used when turning on without a transition; only sent to lights that support transitions.",
-          "default_transition_off": "Used when turning off without a transition; only sent to lights that support transitions."
-        }
+        "title": "Set up Light Wrapper",
+        "description": "Creates the “Light Wrapper” entry with the global settings. Afterwards, add light groups via “Add light group”."
       }
     },
-    "error": {
-      "no_entities": "Please select at least one light."
-    },
     "abort": {
-      "already_configured": "Global settings already exist. You can change them via “Configure”."
+      "single_instance_allowed": "Light Wrapper is already set up. Add light groups via “Add light group”."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Edit Light Wrapper",
-        "data": {
-          "entities": "Lights",
-          "use_default_brightness": "Use default brightness",
-          "default_brightness_pct": "Default brightness",
-          "use_default_color_temp": "Use default color temperature",
-          "default_color_temp_kelvin": "Default color temperature",
-          "use_default_transition_on": "Use own transition when turning on",
-          "default_transition_on": "Transition when turning on",
-          "use_default_transition_off": "Use own transition when turning off",
-          "default_transition_off": "Transition when turning off",
-          "apply_defaults_when_on": "Apply defaults when already on"
-        },
-        "data_description": {
-          "default_brightness_pct": "Used when the light is turned on without a brightness.",
-          "default_color_temp_kelvin": "Used when the light is turned on without a color; only sent to lights that support color temperature.",
-          "use_default_transition_on": "Off: the global transition applies, if one is set.",
-          "default_transition_on": "Used when turning on without a transition; only sent to lights that support transitions.",
-          "use_default_transition_off": "Off: the global transition applies, if one is set.",
-          "default_transition_off": "Used when turning off without a transition; only sent to lights that support transitions.",
-          "apply_defaults_when_on": "Turning on without parameters also applies the defaults when the group is already on."
-        }
-      },
-      "global": {
         "title": "Edit global settings",
         "description": "These transitions apply to all light groups that do not set their own. They are only used when the call does not specify a transition.",
         "data": {
@@ -97,9 +26,78 @@
           "default_transition_off": "Used when turning off without a transition; only sent to lights that support transitions."
         }
       }
-    },
-    "error": {
-      "no_entities": "Please select at least one light."
+    }
+  },
+  "config_subentries": {
+    "light_group": {
+      "entry_type": "Light group",
+      "initiate_flow": {
+        "user": "Add light group"
+      },
+      "step": {
+        "user": {
+          "title": "Add light group",
+          "description": "Combines several lights into one light entity. Optional defaults are used when the light is turned on without brightness or color.",
+          "data": {
+            "name": "Name",
+            "entities": "Lights",
+            "use_default_brightness": "Use default brightness",
+            "default_brightness_pct": "Default brightness",
+            "use_default_color_temp": "Use default color temperature",
+            "default_color_temp_kelvin": "Default color temperature",
+            "use_default_transition_on": "Use own transition when turning on",
+            "default_transition_on": "Transition when turning on",
+            "use_default_transition_off": "Use own transition when turning off",
+            "default_transition_off": "Transition when turning off",
+            "apply_defaults_when_on": "Apply defaults when already on"
+          },
+          "data_description": {
+            "default_brightness_pct": "Used when the light is turned on without a brightness.",
+            "default_color_temp_kelvin": "Used when the light is turned on without a color; only sent to lights that support color temperature.",
+            "use_default_transition_on": "Off: the global transition applies, if one is set.",
+            "default_transition_on": "Used when turning on without a transition; only sent to lights that support transitions.",
+            "use_default_transition_off": "Off: the global transition applies, if one is set.",
+            "default_transition_off": "Used when turning off without a transition; only sent to lights that support transitions.",
+            "apply_defaults_when_on": "Turning on without parameters also applies the defaults when the group is already on."
+          }
+        },
+        "reconfigure": {
+          "title": "Edit light group",
+          "data": {
+            "name": "Name",
+            "entities": "Lights",
+            "use_default_brightness": "Use default brightness",
+            "default_brightness_pct": "Default brightness",
+            "use_default_color_temp": "Use default color temperature",
+            "default_color_temp_kelvin": "Default color temperature",
+            "use_default_transition_on": "Use own transition when turning on",
+            "default_transition_on": "Transition when turning on",
+            "use_default_transition_off": "Use own transition when turning off",
+            "default_transition_off": "Transition when turning off",
+            "apply_defaults_when_on": "Apply defaults when already on"
+          },
+          "data_description": {
+            "default_brightness_pct": "Used when the light is turned on without a brightness.",
+            "default_color_temp_kelvin": "Used when the light is turned on without a color; only sent to lights that support color temperature.",
+            "use_default_transition_on": "Off: the global transition applies, if one is set.",
+            "default_transition_on": "Used when turning on without a transition; only sent to lights that support transitions.",
+            "use_default_transition_off": "Off: the global transition applies, if one is set.",
+            "default_transition_off": "Used when turning off without a transition; only sent to lights that support transitions.",
+            "apply_defaults_when_on": "Turning on without parameters also applies the defaults when the group is already on."
+          }
+        }
+      },
+      "error": {
+        "no_entities": "Please select at least one light."
+      },
+      "abort": {
+        "reconfigure_successful": "The light group has been saved."
+      }
+    }
+  },
+  "device": {
+    "global": {
+      "name": "Global settings"
     }
   },
   "entity": {

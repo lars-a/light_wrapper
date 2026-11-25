@@ -44,7 +44,7 @@ from homeassistant.core import Event, EventStateChangedData, HomeAssistant, Stat
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
-from . import LightWrapperConfigEntry, global_defaults
+from . import LightWrapperConfigEntry
 from .const import (
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
@@ -95,8 +95,11 @@ async def async_setup_entry(
     entry: LightWrapperConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Lichtentität anlegen."""
-    async_add_entities([LightWrapperLight(entry)])
+    """Eine Lichtentität pro Lichtgruppe anlegen."""
+    for subentry_id in entry.runtime_data.groups:
+        async_add_entities(
+            [LightWrapperLight(entry, subentry_id)], config_subentry_id=subentry_id
+        )
 
 
 # --------------------------------------------------------------------------- helpers
@@ -150,11 +153,12 @@ class LightWrapperLight(LightEntity):
     _attr_should_poll = False
     _attr_icon = "mdi:lightbulb-group"
 
-    def __init__(self, entry: LightWrapperConfigEntry) -> None:
-        self._data = entry.runtime_data
+    def __init__(self, entry: LightWrapperConfigEntry, subentry_id: str) -> None:
+        self._data = entry.runtime_data.groups[subentry_id]
+        self._global = entry.runtime_data.global_settings
         self._entity_ids: list[str] = list(self._data.entities)
-        self._attr_unique_id = entry.entry_id
-        self._attr_device_info = device_info(entry)
+        self._attr_unique_id = subentry_id
+        self._attr_device_info = device_info(entry, entry.subentries[subentry_id])
         self._attr_supported_color_modes = {ColorMode.ONOFF}
         self._attr_color_mode = None
         self._attr_is_on = None
@@ -305,7 +309,7 @@ class LightWrapperLight(LightEntity):
             return None
         if key in self._data.defaults:
             return self._data.defaults[key]
-        return global_defaults(self.hass).get(key)
+        return self._global.defaults.get(key)
 
     def _with_transition(
         self, entity_id: str, kwargs: dict[str, Any], transition: float | None

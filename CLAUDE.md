@@ -7,14 +7,14 @@ Sprache: Code-Kommentare, Docstrings, Commit-Messages und README sind auf Deutsc
 ## Aufbau
 
 - `custom_components/light_wrapper/`
-  - Es gibt zwei Arten von Config Entries: Lichtgruppen (`entry.data` leer) und höchstens einen Eintrag „Globale Einstellungen“ (`entry.data["entry_type"] == "global"`, `unique_id` `global`, nur Number-Plattform). Unterscheiden mit `is_global()`. Die Lichtentität liest die globalen Übergangszeiten beim Aufruf über `global_defaults()`; der eigene Wert der Gruppe geht vor.
-  - `__init__.py`: Setup und Laufzeitdaten (`LightWrapperData`). Der Update-Listener lädt nur neu, wenn sich die Lichter ändern oder ein Standardwert an- bzw. abgeschaltet wird. Reine Wertänderungen (z. B. über die Number-Entitäten) gehen ohne Reload durch.
-  - `config_flow.py`: Config-Flow (anlegen; Menü `user` → Schritte `group` bzw. `global`, das Menü entfällt, sobald es den globalen Eintrag gibt) und Options-Flow (bearbeiten; Schritt `init` für Gruppen, `global` für den globalen Eintrag). Die Standardwerte sind Slider; ob sie verwendet werden, steuern die Schalter `use_default_*`. Diese Schalter werden **nicht** gespeichert: In `entry.options` steht ein Standardwert nur, wenn er aktiv ist.
-  - `light.py`: die Gruppen-Lichtentität. `number.py`: Number-Entitäten für die Standardwerte. `switch.py`: Schalter „Standardwerte auch wenn an“ (`apply_defaults_when_on`; standardmäßig an, steht nur als `False` in `entry.options`, wenn abgeschaltet, und wird ohne Reload übernommen). `entity.py`: gemeinsame Basis.
+  - Es gibt genau **einen** Config Entry („Light Wrapper“, `single_config_entry` im Manifest). `entry.options` sind die globalen Einstellungen (nur Übergangszeiten). Jede Lichtgruppe ist ein **Untereintrag** (`subentry_type` `light_group`), ihre Einstellungen stehen in `subentry.data`. Entitäten einer Gruppe werden mit `config_subentry_id` angelegt; unique_ids und Geräte-Identifier beruhen auf der `subentry_id`, die globalen auf der `entry_id`.
+  - `__init__.py`: Setup und Laufzeitdaten (`LightWrapperRuntime` mit `global_settings` und `groups`, je ein `LightWrapperData`). Der Update-Listener lädt nur neu, wenn sich die Struktur ändert (Gruppe angelegt/gelöscht/umbenannt, Lichter geändert, Standardwert an- bzw. abgeschaltet). Reine Wertänderungen (z. B. über die Number-Entitäten) gehen ohne Reload durch.
+  - `config_flow.py`: Config-Flow legt den Eintrag ohne Formular an. Options-Flow (`init`) = globale Einstellungen. `LightGroupSubentryFlow` mit `user` (anlegen) und `reconfigure` (bearbeiten, inkl. Name). Die Standardwerte sind Slider; ob sie verwendet werden, steuern die Schalter `use_default_*`. Diese Schalter werden **nicht** gespeichert: Ein Standardwert steht nur in den Daten, wenn er aktiv ist.
+  - `light.py`: die Gruppen-Lichtentität. `number.py`: Number-Entitäten für die Standardwerte. `switch.py`: Schalter „Standardwerte auch wenn an“ (`apply_defaults_when_on`; standardmäßig an, steht nur als `False` in `subentry.data`, wenn abgeschaltet, und wird ohne Reload übernommen). `entity.py`: `device_info()` und `LightWrapperSettingEntity` (Basis für Number/Switch, speichert in `subentry.data` bzw. `entry.options`).
   - `translations/de.json` und `en.json`: bei jedem neuen Feld **beide** pflegen.
   - `brand/icon.png` (256 px) und `icon@2x.png` (512 px): Icon, das Home Assistant ab 2026.3 anzeigt. Quelle ist `assets/icon.svg`; nach Änderungen beide PNGs neu rendern (z. B. mit `cairosvg`).
 - `tests/`: pytest mit `pytest-homeassistant-custom-component`.
-- `hacs.json`: HACS installiert die ZIP-Datei aus dem Release (`zip_release`).
+- `hacs.json`: HACS installiert die ZIP-Datei aus dem Release (`zip_release`). Mindestversion Home Assistant 2025.3.0 (Untereinträge mit Entitäten und Bearbeiten-Dialog).
 
 ## manifest.json
 

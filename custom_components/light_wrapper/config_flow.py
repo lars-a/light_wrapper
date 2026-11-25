@@ -12,35 +12,34 @@ from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
+    ConfigSubentryFlow,
     OptionsFlow,
+    SubentryFlowResult,
 )
 from homeassistant.const import CONF_ENTITIES, CONF_NAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er, selector
 
-from . import apply_when_on_from_options, is_global, normalize_default
+from . import apply_when_on_from_options, normalize_default
 from .const import (
     CONF_APPLY_WHEN_ON,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
     CONF_DEFAULT_TRANSITION_OFF,
     CONF_DEFAULT_TRANSITION_ON,
-    CONF_ENTRY_TYPE,
     DOMAIN,
-    ENTRY_TYPE_GLOBAL,
+    ENTRY_TITLE,
     FALLBACK_BRIGHTNESS_PCT,
     FALLBACK_COLOR_TEMP_KELVIN,
     FALLBACK_TRANSITION,
-    GLOBAL_UNIQUE_ID,
     MAX_BRIGHTNESS_PCT,
     MAX_TRANSITION,
     MIN_BRIGHTNESS_PCT,
     MIN_TRANSITION,
+    SUBENTRY_TYPE_GROUP,
     TRANSITION_STEP,
 )
 from .entity import clamp, color_temp_range
-
-GLOBAL_TITLE = "Globale Einstellungen"
 
 # Schalter, ob ein Standardwert verwendet wird (werden nicht gespeichert)
 CONF_USE_DEFAULT_BRIGHTNESS = "use_default_brightness"
@@ -179,8 +178,17 @@ def _group_options(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str,
     return options
 
 
+def _with_name(name: str | None, schema: vol.Schema) -> vol.Schema:
+    return vol.Schema(
+        {vol.Required(CONF_NAME, default=name or vol.UNDEFINED): selector.TextSelector()}
+    ).extend(schema.schema)
+
+
 class LightWrapperConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Neue Lichtgruppe oder die globalen Einstellungen anlegen."""
+    """Integration einrichten: legt sofort den einzigen Eintrag an (globale Einstellungen).
+
+    Lichtgruppen werden danach als Untereinträge hinzugefügt.
+    """
 
     VERSION = 1
 
@@ -189,92 +197,86 @@ class LightWrapperConfigFlow(ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
         return LightWrapperOptionsFlow()
 
+    @classmethod
+    @callback
+    def async_get_supported_subentry_types(
+        cls, config_entry: ConfigEntry
+    ) -> dict[str, type[ConfigSubentryFlow]]:
+        return {SUBENTRY_TYPE_GROUP: LightGroupSubentryFlow}
+
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Auswahl anbieten, solange es noch keine globalen Einstellungen gibt."""
-        if any(is_global(entry) for entry in self._async_current_entries()):
-            return await self.async_step_group()
-        return self.async_show_menu(step_id="user", menu_options=["group", "global"])
-
-    async def async_step_group(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            options = _group_options(self.hass, user_input)
-            if not options[CONF_ENTITIES]:
-                errors[CONF_ENTITIES] = "no_entities"
-            else:
-                return self.async_create_entry(
-                    title=user_input[CONF_NAME], data={}, options=options
-                )
-
-        # Die Lichter sind hier noch nicht gewählt: fester Bereich für den Slider
-        bounds = color_temp_range(self.hass, [])
-        schema = vol.Schema({vol.Required(CONF_NAME): selector.TextSelector()}).extend(
-            _group_schema([], bounds).schema
-        )
-        return self.async_show_form(
-            step_id="group",
-            data_schema=self.add_suggested_values_to_schema(
-                schema, user_input or _group_form_values({}, bounds)
-            ),
-            errors=errors,
-        )
-
-    async def async_step_global(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        await self.async_set_unique_id(GLOBAL_UNIQUE_ID)
-        self._abort_if_unique_id_configured()
-        if user_input is not None:
-            return self.async_create_entry(
-                title=GLOBAL_TITLE,
-                data={CONF_ENTRY_TYPE: ENTRY_TYPE_GLOBAL},
-                options=_toggle_options(user_input, _TRANSITION_TOGGLES),
-            )
-        return self.async_show_form(
-            step_id="global",
-            data_schema=self.add_suggested_values_to_schema(
-                _global_schema(), _toggle_values({}, _TRANSITION_TOGGLES)
-            ),
-        )
+        # Nur ein Eintrag erlaubt (single_config_entry im Manifest)
+        return self.async_create_entry(title=ENTRY_TITLE, data={}, options={})
 
 
 class LightWrapperOptionsFlow(OptionsFlow):
-    """Einstellungen einer Lichtgruppe oder die globalen Einstellungen ändern."""
+    """Globale Einstellungen ändern (Standard-Übergangszeiten für alle Gruppen)."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        if is_global(self.config_entry):
-            return await self.async_step_global(user_input)
-
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            options = _group_options(self.hass, user_input)
-            if not options[CONF_ENTITIES]:
-                errors[CONF_ENTITIES] = "no_entities"
-            else:
-                return self.async_create_entry(data=options)
-
-        # Die eigene Lichtentität nicht zur Auswahl anbieten (Schleife vermeiden)
-        own_entity = er.async_get(self.hass).async_get_entity_id(
-            LIGHT_DOMAIN, DOMAIN, self.config_entry.entry_id
-        )
-        # Slider-Bereich: gemeinsamer Bereich der aktuell gespeicherten Lichter
-        bounds = color_temp_range(self.hass, self.config_entry.options.get(CONF_ENTITIES, []))
-        schema = _group_schema([own_entity] if own_entity else [], bounds)
-        return self.async_show_form(
-            step_id="init",
-            data_schema=self.add_suggested_values_to_schema(
-                schema, user_input or _group_form_values(self.config_entry.options, bounds)
-            ),
-            errors=errors,
-        )
-
-    async def async_step_global(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             return self.async_create_entry(
                 data=_toggle_options(user_input, _TRANSITION_TOGGLES)
             )
         return self.async_show_form(
-            step_id="global",
+            step_id="init",
             data_schema=self.add_suggested_values_to_schema(
                 _global_schema(),
                 _toggle_values(self.config_entry.options, _TRANSITION_TOGGLES),
             ),
+        )
+
+
+class LightGroupSubentryFlow(ConfigSubentryFlow):
+    """Lichtgruppe hinzufügen oder bearbeiten."""
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            options = _group_options(self.hass, user_input)
+            if not options[CONF_ENTITIES]:
+                errors[CONF_ENTITIES] = "no_entities"
+            else:
+                return self.async_create_entry(title=user_input[CONF_NAME], data=options)
+
+        # Die Lichter sind hier noch nicht gewählt: fester Bereich für den Slider
+        bounds = color_temp_range(self.hass, [])
+        return self.async_show_form(
+            step_id="user",
+            data_schema=self.add_suggested_values_to_schema(
+                _with_name(None, _group_schema([], bounds)),
+                user_input or _group_form_values({}, bounds),
+            ),
+            errors=errors,
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        entry = self._get_entry()
+        subentry = self._get_reconfigure_subentry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            options = _group_options(self.hass, user_input)
+            if not options[CONF_ENTITIES]:
+                errors[CONF_ENTITIES] = "no_entities"
+            else:
+                return self.async_update_and_abort(
+                    entry, subentry, title=user_input[CONF_NAME], data=options
+                )
+
+        # Die eigene Lichtentität nicht zur Auswahl anbieten (Schleife vermeiden)
+        own_entity = er.async_get(self.hass).async_get_entity_id(
+            LIGHT_DOMAIN, DOMAIN, subentry.subentry_id
+        )
+        # Slider-Bereich: gemeinsamer Bereich der aktuell gespeicherten Lichter
+        bounds = color_temp_range(self.hass, subentry.data.get(CONF_ENTITIES, []))
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=self.add_suggested_values_to_schema(
+                _with_name(subentry.title, _group_schema([own_entity] if own_entity else [], bounds)),
+                user_input or _group_form_values(subentry.data, bounds),
+            ),
+            errors=errors,
         )
