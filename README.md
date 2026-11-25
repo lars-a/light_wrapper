@@ -17,7 +17,7 @@ Fasst mehrere physische Lichter zu **einer** Lichtentität zusammen, die sich wi
 Die Seite der Integration ist so aufgebaut:
 
 * **Light Wrapper**: der einzige Eintrag. Über **Konfigurieren** (Zahnrad) stellst du die globalen Einstellungen ein.
-* Darunter die **Lichtgruppen**. Jede hat ein eigenes Gerät; über ihr Bearbeiten-Symbol änderst du Namen, Lichter und Standardwerte, über ihr ⋮-Menü löschst du sie.
+* Darunter die **Lichtgruppen**. Jede hat ein eigenes Gerät und lässt sich dort bearbeiten (Name, Lichter, Standardwerte) oder löschen. Beim Löschen verschwinden auch ihr Gerät und ihre Entitäten.
 
 ### Manuell
 
@@ -53,13 +53,15 @@ Die globalen Einstellungen öffnest du über **Konfigurieren** am Eintrag **Ligh
 
 Jede Gruppe kann in ihrem Bearbeiten-Dialog mit „Eigene Übergangszeit … verwenden“ einen eigenen Wert festlegen. Der eigene Wert geht vor; ohne eigenen Wert gilt der globale, und ohne beides wird keine Übergangszeit gesendet.
 
-## Verhalten beim Einschalten
+Eine Übergangszeit von 0 s wird ausdrücklich als `transition: 0` gesendet. Das ist nicht dasselbe wie keine Übergangszeit: Lampen mit eigenem, eingebautem Übergang schalten dann sofort.
+
+## Verhalten beim Ein- und Ausschalten
 
 * Der Schalter **„Standardwerte auch wenn an“** (im Bearbeiten-Dialog der Gruppe oder als Switch-Entität) ist standardmäßig **an**. Dann setzt ein `turn_on` **ohne Parameter** die Standardwerte auch bei schon eingeschalteter Gruppe. Nur `transition` darf zusätzlich angegeben sein. Kommt eine Helligkeit oder Farbe mit, gilt das normale Verhalten: Bei eingeschalteter Gruppe wird nur der angegebene Wert geändert. Ein Helligkeits-Slider im Dashboard setzt also nicht nebenbei die Farbtemperatur zurück.
 * Ist der Schalter **aus**, greifen Standardwerte nur, wenn die Gruppe **vorher aus** war. Ein `turn_on` auf ein schon eingeschaltetes Licht ändert dann nichts an Helligkeit oder Farbe.
 * Die **Standardhelligkeit** wird verwendet, wenn keine Helligkeit angegeben ist (`brightness`, `brightness_pct`, `brightness_step`, `white`).
 * Die **Standard-Farbtemperatur** wird verwendet, wenn keine Farbe angegeben ist (`color_temp_kelvin`, `hs_color`, `rgb_color`, `xy_color`, `white`, `effect` …). Sie geht nur an Mitglieder, die Farbtemperatur unterstützen, und wird auf deren Bereich begrenzt.
-* Beide Werte werden unabhängig voneinander geprüft: `light.turn_on` mit nur `brightness_pct: 30` setzt trotzdem die Standard-Farbtemperatur.
+* War die Gruppe aus, werden beide Werte unabhängig voneinander geprüft: `light.turn_on` mit nur `brightness_pct: 30` setzt dann trotzdem die Standard-Farbtemperatur.
 * `transition` und `flash` werden immer durchgereicht.
 * Die **Standard-Übergangszeit** wird bei jedem `turn_on` bzw. `turn_off` ohne `transition` und ohne `flash` verwendet, auch wenn die Gruppe schon an ist (z. B. beim Ändern der Helligkeit). Sie geht nur an Mitglieder, die Übergänge unterstützen.
 
@@ -69,6 +71,7 @@ Jede Gruppe kann in ihrem Bearbeiten-Dialog mit „Eigene Übergangszeit … ver
 * Helligkeit, Farbtemperatur und Farben sind der Mittelwert der eingeschalteten Mitglieder.
 * Unterstützte Farbmodi und Features sind die Vereinigung aller Mitglieder. Als aktueller Farbmodus gilt der häufigste unter den eingeschalteten Mitgliedern.
 * Das Attribut `entity_id` listet die Mitglieder, wie bei normalen Gruppen.
+* Aktive Standardwerte der Gruppe stehen zusätzlich als Attribute an der Lichtentität (`default_brightness_pct`, `default_color_temp_kelvin`, `default_transition_on`, `default_transition_off`). Globale Übergangszeiten erscheinen dort nicht.
 
 ## Lizenz
 
