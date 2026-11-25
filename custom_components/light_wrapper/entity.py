@@ -14,17 +14,24 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
-from .const import DOMAIN, MAX_COLOR_TEMP_KELVIN, MIN_COLOR_TEMP_KELVIN
+from .const import (
+    CONF_ENTRY_TYPE,
+    DOMAIN,
+    ENTRY_TYPE_GLOBAL,
+    MAX_COLOR_TEMP_KELVIN,
+    MIN_COLOR_TEMP_KELVIN,
+)
 
 
 def device_info(entry: ConfigEntry) -> DeviceInfo:
-    """Ein virtuelles Gerät pro Wrapper, damit Licht und Einstellungen zusammen erscheinen."""
+    """Ein virtuelles Gerät pro Eintrag, damit Licht und Einstellungen zusammen erscheinen."""
+    global_entry = entry.data.get(CONF_ENTRY_TYPE) == ENTRY_TYPE_GLOBAL
     return DeviceInfo(
         identifiers={(DOMAIN, entry.entry_id)},
         name=entry.title,
         entry_type=DeviceEntryType.SERVICE,
         manufacturer="Light Wrapper",
-        model="Lichtgruppe",
+        model="Globale Einstellungen" if global_entry else "Lichtgruppe",
     )
 
 

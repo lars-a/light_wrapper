@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 import itertools
 from typing import Any
 
@@ -15,6 +15,7 @@ from homeassistant.components.light import (
     ATTR_COLOR_TEMP_KELVIN,
     ATTR_EFFECT,
     ATTR_EFFECT_LIST,
+    ATTR_FLASH,
     ATTR_HS_COLOR,
     ATTR_MAX_COLOR_TEMP_KELVIN,
     ATTR_MIN_COLOR_TEMP_KELVIN,
@@ -43,8 +44,13 @@ from homeassistant.core import Event, EventStateChangedData, HomeAssistant, Stat
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
-from . import LightWrapperConfigEntry
-from .const import CONF_DEFAULT_BRIGHTNESS, CONF_DEFAULT_COLOR_TEMP
+from . import LightWrapperConfigEntry, global_defaults
+from .const import (
+    CONF_DEFAULT_BRIGHTNESS,
+    CONF_DEFAULT_COLOR_TEMP,
+    CONF_DEFAULT_TRANSITION_OFF,
+    CONF_DEFAULT_TRANSITION_ON,
+)
 from .entity import device_info
 
 # Parameter, die eine Helligkeit vorgeben -> Standardhelligkeit wird nicht angewendet
@@ -63,6 +69,8 @@ COLOR_PARAMS = {
 
 # Parameter, die bei schon eingeschalteter Gruppe noch als „ohne Parameter“ gelten
 PASSIVE_PARAMS = {ATTR_TRANSITION}
+# Parameter, bei denen keine Standard-Übergangszeit ergänzt wird
+TRANSITION_PARAMS = {ATTR_TRANSITION, ATTR_FLASH}
 
 SUPPORTED_FEATURES_MASK = (
     LightEntityFeature.EFFECT | LightEntityFeature.FLASH | LightEntityFeature.TRANSITION
@@ -249,6 +257,7 @@ class LightWrapperLight(LightEntity):
         War die Gruppe aus, gilt jeder Standardwert, dessen Größe nicht vorgegeben ist.
         Ist sie schon an, gelten die Standardwerte nur, wenn der Schalter „auch wenn an“
         aktiv ist und außer einem Übergang keine Parameter angegeben sind.
+        Die Standard-Übergangszeit gilt für jedes Einschalten ohne transition/flash.
         """
         defaults = self._data.defaults
         apply_defaults = self.is_on is not True or (
@@ -265,33 +274,70 @@ class LightWrapperLight(LightEntity):
             if apply_defaults and not kwargs.keys() & COLOR_PARAMS
             else None
         )
+        transition = self._default_transition(CONF_DEFAULT_TRANSITION_ON, kwargs)
 
-        if brightness_pct is None and color_temp is None:
-            await self._async_call(SERVICE_TURN_ON, self._entity_ids, kwargs)
-            return
-
-        # Mitglieder mit identischem Payload in einem Aufruf zusammenfassen
-        batches: dict[str, tuple[dict[str, Any], list[str]]] = {}
-        for entity_id in self._entity_ids:
-            payload = dict(kwargs)
+        def payload(entity_id: str) -> dict[str, Any]:
+            data = self._with_transition(entity_id, kwargs, transition)
             if brightness_pct is not None:
-                payload[ATTR_BRIGHTNESS_PCT] = brightness_pct
+                data[ATTR_BRIGHTNESS_PCT] = brightness_pct
             if color_temp is not None and (
                 kelvin := self._member_color_temp(entity_id, color_temp)
             ) is not None:
-                payload[ATTR_COLOR_TEMP_KELVIN] = kelvin
-            key = repr(sorted(payload.items()))
-            batches.setdefault(key, (payload, []))[1].append(entity_id)
+                data[ATTR_COLOR_TEMP_KELVIN] = kelvin
+            return data
+
+        await self._async_call_members(SERVICE_TURN_ON, payload)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Ausschalten; ohne transition/flash mit der Standard-Übergangszeit."""
+        transition = self._default_transition(CONF_DEFAULT_TRANSITION_OFF, kwargs)
+        await self._async_call_members(
+            SERVICE_TURN_OFF,
+            lambda entity_id: self._with_transition(entity_id, kwargs, transition),
+        )
+
+    def _default_transition(self, key: str, kwargs: dict[str, Any]) -> float | None:
+        """Eigene Standard-Übergangszeit der Gruppe, sonst die globale.
+
+        Keine, wenn im Aufruf schon transition oder flash steht.
+        """
+        if kwargs.keys() & TRANSITION_PARAMS:
+            return None
+        if key in self._data.defaults:
+            return self._data.defaults[key]
+        return global_defaults(self.hass).get(key)
+
+    def _with_transition(
+        self, entity_id: str, kwargs: dict[str, Any], transition: float | None
+    ) -> dict[str, Any]:
+        """Aufrufdaten für ein Mitglied; Übergang nur, wenn es Übergänge unterstützt."""
+        data = dict(kwargs)
+        if transition is not None and self._member_supports_transition(entity_id):
+            data[ATTR_TRANSITION] = transition
+        return data
+
+    def _member_supports_transition(self, entity_id: str) -> bool:
+        if (state := self.hass.states.get(entity_id)) is None:
+            return False
+        features = int(state.attributes.get(ATTR_SUPPORTED_FEATURES, 0))
+        return bool(features & LightEntityFeature.TRANSITION)
+
+    async def _async_call_members(
+        self, service: str, payload: Callable[[str], dict[str, Any]]
+    ) -> None:
+        """Mitglieder mit identischem Payload in einem Aufruf zusammenfassen."""
+        batches: dict[str, tuple[dict[str, Any], list[str]]] = {}
+        for entity_id in self._entity_ids:
+            data = payload(entity_id)
+            key = repr(sorted(data.items()))
+            batches.setdefault(key, (data, []))[1].append(entity_id)
 
         await asyncio.gather(
             *(
-                self._async_call(SERVICE_TURN_ON, entity_ids, payload)
-                for payload, entity_ids in batches.values()
+                self._async_call(service, entity_ids, data)
+                for data, entity_ids in batches.values()
             )
         )
-
-    async def async_turn_off(self, **kwargs: Any) -> None:
-        await self._async_call(SERVICE_TURN_OFF, self._entity_ids, kwargs)
 
     def _member_color_temp(self, entity_id: str, kelvin: int) -> int | None:
         """Farbtemperatur nur für Mitglieder, die sie unterstützen; auf deren Bereich begrenzt."""

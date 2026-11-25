@@ -14,9 +14,11 @@ from homeassistant.core import HomeAssistant
 from custom_components.light_wrapper.const import (
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
+    CONF_DEFAULT_TRANSITION_OFF,
+    CONF_DEFAULT_TRANSITION_ON,
 )
 
-from .conftest import WRAPPER_ID, number_entity_id, set_member, setup_wrapper
+from .conftest import WRAPPER_ID, number_entity_id, set_member, setup_global, setup_wrapper
 
 CT_LIGHT = "light.decke"
 DIM_LIGHT = "light.stehlampe"
@@ -104,3 +106,44 @@ async def test_color_temp_number_range_without_overlap_uses_union(hass: HomeAssi
     entry = await setup_wrapper(hass, [CT_LIGHT, "light.spot"], **{CONF_DEFAULT_COLOR_TEMP: 3000})
     attrs = hass.states.get(number_entity_id(hass, entry, CONF_DEFAULT_COLOR_TEMP)).attributes
     assert (attrs["min"], attrs["max"]) == (2000, 6500)
+
+
+async def test_transition_number_set_value(hass: HomeAssistant) -> None:
+    set_member(hass, CT_LIGHT, "off")
+    entry = await setup_wrapper(hass, [CT_LIGHT], **{CONF_DEFAULT_TRANSITION_ON: 1.0})
+    on_id = number_entity_id(hass, entry, CONF_DEFAULT_TRANSITION_ON)
+    assert number_entity_id(hass, entry, CONF_DEFAULT_TRANSITION_OFF) is None
+
+    attrs = hass.states.get(on_id).attributes
+    assert (attrs["min"], attrs["max"], attrs["step"]) == (0, 10, 0.1)
+
+    await hass.services.async_call(
+        NUMBER_DOMAIN,
+        SERVICE_SET_VALUE,
+        {ATTR_ENTITY_ID: on_id, ATTR_VALUE: 2.5},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    assert entry.options[CONF_DEFAULT_TRANSITION_ON] == 2.5
+    assert float(hass.states.get(on_id).state) == 2.5
+
+
+async def test_global_transition_numbers(hass: HomeAssistant) -> None:
+    entry = await setup_global(
+        hass, **{CONF_DEFAULT_TRANSITION_ON: 0.5, CONF_DEFAULT_TRANSITION_OFF: 2.0}
+    )
+    runtime_before = entry.runtime_data
+    off_id = number_entity_id(hass, entry, CONF_DEFAULT_TRANSITION_OFF)
+    assert float(hass.states.get(off_id).state) == 2.0
+
+    await hass.services.async_call(
+        NUMBER_DOMAIN,
+        SERVICE_SET_VALUE,
+        {ATTR_ENTITY_ID: off_id, ATTR_VALUE: 6.3},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    assert entry.options[CONF_DEFAULT_TRANSITION_OFF] == 6.3
+    assert entry.runtime_data is runtime_before  # kein Reload

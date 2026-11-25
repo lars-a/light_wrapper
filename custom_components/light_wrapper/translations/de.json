@@ -2,6 +2,14 @@
   "config": {
     "step": {
       "user": {
+        "title": "Light Wrapper hinzufügen",
+        "description": "Was möchtest du anlegen?",
+        "menu_options": {
+          "group": "Lichtgruppe",
+          "global": "Globale Einstellungen (Standard-Übergangszeiten für alle Gruppen)"
+        }
+      },
+      "group": {
         "title": "Light Wrapper erstellen",
         "description": "Fasst mehrere Lichter zu einer Lichtentität zusammen. Optionale Standardwerte werden beim Einschalten verwendet, wenn keine Helligkeit bzw. Farbe angegeben ist.",
         "data": {
@@ -11,17 +19,42 @@
           "default_brightness_pct": "Standardhelligkeit",
           "use_default_color_temp": "Standard-Farbtemperatur verwenden",
           "default_color_temp_kelvin": "Standard-Farbtemperatur",
+          "use_default_transition_on": "Eigene Übergangszeit beim Einschalten verwenden",
+          "default_transition_on": "Übergangszeit beim Einschalten",
+          "use_default_transition_off": "Eigene Übergangszeit beim Ausschalten verwenden",
+          "default_transition_off": "Übergangszeit beim Ausschalten",
           "apply_defaults_when_on": "Standardwerte auch bei eingeschaltetem Licht"
         },
         "data_description": {
           "default_brightness_pct": "Wird beim Einschalten verwendet, wenn keine Helligkeit angegeben ist.",
           "default_color_temp_kelvin": "Wird beim Einschalten verwendet, wenn keine Farbe angegeben ist; nur an Lichter, die Farbtemperatur unterstützen.",
+          "use_default_transition_on": "Aus: Es gilt die globale Übergangszeit, falls eine eingestellt ist.",
+          "default_transition_on": "Wird beim Einschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
+          "use_default_transition_off": "Aus: Es gilt die globale Übergangszeit, falls eine eingestellt ist.",
+          "default_transition_off": "Wird beim Ausschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
           "apply_defaults_when_on": "Ein Einschalten ohne Parameter setzt die Standardwerte auch dann, wenn die Gruppe schon an ist."
+        }
+      },
+      "global": {
+        "title": "Globale Einstellungen",
+        "description": "Diese Übergangszeiten gelten für alle Lichtgruppen, die keine eigene festlegen. Sie werden nur verwendet, wenn im Aufruf keine Übergangszeit angegeben ist.",
+        "data": {
+          "use_default_transition_on": "Übergangszeit beim Einschalten verwenden",
+          "default_transition_on": "Übergangszeit beim Einschalten",
+          "use_default_transition_off": "Übergangszeit beim Ausschalten verwenden",
+          "default_transition_off": "Übergangszeit beim Ausschalten"
+        },
+        "data_description": {
+          "default_transition_on": "Wird beim Einschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
+          "default_transition_off": "Wird beim Ausschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen."
         }
       }
     },
     "error": {
       "no_entities": "Bitte mindestens ein Licht auswählen."
+    },
+    "abort": {
+      "already_configured": "Die globalen Einstellungen gibt es bereits. Du kannst sie über „Konfigurieren“ ändern."
     }
   },
   "options": {
@@ -34,12 +67,34 @@
           "default_brightness_pct": "Standardhelligkeit",
           "use_default_color_temp": "Standard-Farbtemperatur verwenden",
           "default_color_temp_kelvin": "Standard-Farbtemperatur",
+          "use_default_transition_on": "Eigene Übergangszeit beim Einschalten verwenden",
+          "default_transition_on": "Übergangszeit beim Einschalten",
+          "use_default_transition_off": "Eigene Übergangszeit beim Ausschalten verwenden",
+          "default_transition_off": "Übergangszeit beim Ausschalten",
           "apply_defaults_when_on": "Standardwerte auch bei eingeschaltetem Licht"
         },
         "data_description": {
           "default_brightness_pct": "Wird beim Einschalten verwendet, wenn keine Helligkeit angegeben ist.",
           "default_color_temp_kelvin": "Wird beim Einschalten verwendet, wenn keine Farbe angegeben ist; nur an Lichter, die Farbtemperatur unterstützen.",
+          "use_default_transition_on": "Aus: Es gilt die globale Übergangszeit, falls eine eingestellt ist.",
+          "default_transition_on": "Wird beim Einschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
+          "use_default_transition_off": "Aus: Es gilt die globale Übergangszeit, falls eine eingestellt ist.",
+          "default_transition_off": "Wird beim Ausschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
           "apply_defaults_when_on": "Ein Einschalten ohne Parameter setzt die Standardwerte auch dann, wenn die Gruppe schon an ist."
+        }
+      },
+      "global": {
+        "title": "Globale Einstellungen bearbeiten",
+        "description": "Diese Übergangszeiten gelten für alle Lichtgruppen, die keine eigene festlegen. Sie werden nur verwendet, wenn im Aufruf keine Übergangszeit angegeben ist.",
+        "data": {
+          "use_default_transition_on": "Übergangszeit beim Einschalten verwenden",
+          "default_transition_on": "Übergangszeit beim Einschalten",
+          "use_default_transition_off": "Übergangszeit beim Ausschalten verwenden",
+          "default_transition_off": "Übergangszeit beim Ausschalten"
+        },
+        "data_description": {
+          "default_transition_on": "Wird beim Einschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
+          "default_transition_off": "Wird beim Ausschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen."
         }
       }
     },
@@ -54,6 +109,12 @@
       },
       "default_color_temp": {
         "name": "Standard-Farbtemperatur"
+      },
+      "default_transition_on": {
+        "name": "Übergangszeit Einschalten"
+      },
+      "default_transition_off": {
+        "name": "Übergangszeit Ausschalten"
       }
     },
     "switch": {

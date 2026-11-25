@@ -25,9 +25,11 @@ from custom_components.light_wrapper.const import (
     CONF_APPLY_WHEN_ON,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
+    CONF_DEFAULT_TRANSITION_OFF,
+    CONF_DEFAULT_TRANSITION_ON,
 )
 
-from .conftest import WRAPPER_ID, calls_by_entity, set_member, setup_wrapper
+from .conftest import WRAPPER_ID, calls_by_entity, set_member, setup_global, setup_wrapper
 
 CT_LIGHT = "light.decke"  # kann Farbtemperatur (2200–6500 K)
 DIM_LIGHT = "light.stehlampe"  # nur dimmbar
@@ -281,3 +283,85 @@ async def test_turn_off_passes_transition(hass: HomeAssistant, member_calls) -> 
     calls = calls_by_entity(member_calls)
     assert calls[CT_LIGHT] == (SERVICE_TURN_OFF, {ATTR_TRANSITION: 2})
     assert calls[DIM_LIGHT] == (SERVICE_TURN_OFF, {ATTR_TRANSITION: 2})
+
+
+# --------------------------------------------------------------------------- Übergangszeiten
+
+TRANSITION = int(LightEntityFeature.TRANSITION)
+
+
+async def _turn_off(hass: HomeAssistant, **data) -> None:
+    await hass.services.async_call(
+        LIGHT_DOMAIN, SERVICE_TURN_OFF, {ATTR_ENTITY_ID: WRAPPER_ID, **data}, blocking=True
+    )
+
+
+async def test_own_transitions_for_on_and_off(hass: HomeAssistant, member_calls) -> None:
+    set_member(hass, CT_LIGHT, "off", features=TRANSITION)
+    set_member(hass, DIM_LIGHT, "off", modes=("brightness",))  # kann keine Übergänge
+    await setup_wrapper(
+        hass,
+        [CT_LIGHT, DIM_LIGHT],
+        **{CONF_DEFAULT_TRANSITION_ON: 1.5, CONF_DEFAULT_TRANSITION_OFF: 3.0},
+    )
+
+    await _turn_on(hass)
+    calls = calls_by_entity(member_calls)
+    assert calls[CT_LIGHT] == (SERVICE_TURN_ON, {ATTR_TRANSITION: 1.5})
+    assert calls[DIM_LIGHT] == (SERVICE_TURN_ON, {})
+
+    member_calls.reset_mock()
+    await _turn_off(hass)
+    calls = calls_by_entity(member_calls)
+    assert calls[CT_LIGHT] == (SERVICE_TURN_OFF, {ATTR_TRANSITION: 3.0})
+    assert calls[DIM_LIGHT] == (SERVICE_TURN_OFF, {})
+
+
+async def test_global_transition_applies_without_own(hass: HomeAssistant, member_calls) -> None:
+    await setup_global(
+        hass, **{CONF_DEFAULT_TRANSITION_ON: 0.5, CONF_DEFAULT_TRANSITION_OFF: 2.0}
+    )
+    set_member(hass, CT_LIGHT, "off", features=TRANSITION)
+    await setup_wrapper(hass, [CT_LIGHT], **{CONF_DEFAULT_TRANSITION_OFF: 4.0})
+
+    await _turn_on(hass)
+    assert calls_by_entity(member_calls)[CT_LIGHT] == (SERVICE_TURN_ON, {ATTR_TRANSITION: 0.5})
+
+    member_calls.reset_mock()
+    await _turn_off(hass)
+    # Eigener Wert der Gruppe geht vor
+    assert calls_by_entity(member_calls)[CT_LIGHT] == (SERVICE_TURN_OFF, {ATTR_TRANSITION: 4.0})
+
+
+async def test_given_transition_wins(hass: HomeAssistant, member_calls) -> None:
+    await setup_global(hass, **{CONF_DEFAULT_TRANSITION_ON: 0.5})
+    set_member(hass, CT_LIGHT, "off", features=TRANSITION)
+    await setup_wrapper(hass, [CT_LIGHT])
+
+    await _turn_on(hass, transition=7)
+
+    assert calls_by_entity(member_calls)[CT_LIGHT] == (SERVICE_TURN_ON, {ATTR_TRANSITION: 7})
+
+
+async def test_no_default_transition_with_flash(hass: HomeAssistant, member_calls) -> None:
+    features = TRANSITION | int(LightEntityFeature.FLASH)
+    set_member(hass, CT_LIGHT, "off", features=features)
+    await setup_wrapper(hass, [CT_LIGHT], **{CONF_DEFAULT_TRANSITION_ON: 1.0})
+
+    await _turn_on(hass, flash="short")
+
+    assert ATTR_TRANSITION not in calls_by_entity(member_calls)[CT_LIGHT][1]
+
+
+async def test_transition_combined_with_defaults(hass: HomeAssistant, member_calls) -> None:
+    set_member(hass, CT_LIGHT, "off", features=TRANSITION)
+    await setup_wrapper(
+        hass, [CT_LIGHT], **{CONF_DEFAULT_BRIGHTNESS: 60, CONF_DEFAULT_TRANSITION_ON: 2.0}
+    )
+
+    await _turn_on(hass)
+
+    assert calls_by_entity(member_calls)[CT_LIGHT] == (
+        SERVICE_TURN_ON,
+        {ATTR_BRIGHTNESS_PCT: 60, ATTR_TRANSITION: 2.0},
+    )

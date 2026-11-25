@@ -1,14 +1,15 @@
 # Light Wrapper – Hinweise für Claude
 
-Home-Assistant-Custom-Integration (Domain `light_wrapper`), installiert über HACS als benutzerdefiniertes Repository aus `github.com/lars-a/light_wrapper`. Sie fasst mehrere Lichter zu einer Lichtentität zusammen. Dazu kommen optionale Standardwerte für Helligkeit und Farbtemperatur, die beim Einschalten ohne Parameter gelten. Das Verhalten im Detail steht im README.
+Home-Assistant-Custom-Integration (Domain `light_wrapper`), installiert über HACS als benutzerdefiniertes Repository aus `github.com/lars-a/light_wrapper`. Sie fasst mehrere Lichter zu einer Lichtentität zusammen. Dazu kommen optionale Standardwerte für Helligkeit und Farbtemperatur, die beim Einschalten ohne Parameter gelten, und Standard-Übergangszeiten für Ein- und Ausschalten (pro Gruppe oder global). Das Verhalten im Detail steht im README.
 
 Sprache: Code-Kommentare, Docstrings, Commit-Messages und README sind auf Deutsch. Mit dem Nutzer wird Deutsch gesprochen.
 
 ## Aufbau
 
 - `custom_components/light_wrapper/`
+  - Es gibt zwei Arten von Config Entries: Lichtgruppen (`entry.data` leer) und höchstens einen Eintrag „Globale Einstellungen“ (`entry.data["entry_type"] == "global"`, `unique_id` `global`, nur Number-Plattform). Unterscheiden mit `is_global()`. Die Lichtentität liest die globalen Übergangszeiten beim Aufruf über `global_defaults()`; der eigene Wert der Gruppe geht vor.
   - `__init__.py`: Setup und Laufzeitdaten (`LightWrapperData`). Der Update-Listener lädt nur neu, wenn sich die Lichter ändern oder ein Standardwert an- bzw. abgeschaltet wird. Reine Wertänderungen (z. B. über die Number-Entitäten) gehen ohne Reload durch.
-  - `config_flow.py`: Config-Flow (anlegen) und Options-Flow (bearbeiten). Die Standardwerte sind Slider; ob sie verwendet werden, steuern die Schalter `use_default_*`. Diese Schalter werden **nicht** gespeichert: In `entry.options` steht ein Standardwert nur, wenn er aktiv ist.
+  - `config_flow.py`: Config-Flow (anlegen; Menü `user` → Schritte `group` bzw. `global`, das Menü entfällt, sobald es den globalen Eintrag gibt) und Options-Flow (bearbeiten; Schritt `init` für Gruppen, `global` für den globalen Eintrag). Die Standardwerte sind Slider; ob sie verwendet werden, steuern die Schalter `use_default_*`. Diese Schalter werden **nicht** gespeichert: In `entry.options` steht ein Standardwert nur, wenn er aktiv ist.
   - `light.py`: die Gruppen-Lichtentität. `number.py`: Number-Entitäten für die Standardwerte. `switch.py`: Schalter „Standardwerte auch wenn an“ (`apply_defaults_when_on`; standardmäßig an, steht nur als `False` in `entry.options`, wenn abgeschaltet, und wird ohne Reload übernommen). `entity.py`: gemeinsame Basis.
   - `translations/de.json` und `en.json`: bei jedem neuen Feld **beide** pflegen.
   - `brand/icon.png` (256 px) und `icon@2x.png` (512 px): Icon, das Home Assistant ab 2026.3 anzeigt. Quelle ist `assets/icon.svg`; nach Änderungen beide PNGs neu rendern (z. B. mit `cairosvg`).

@@ -4,19 +4,24 @@ from __future__ import annotations
 
 from homeassistant.components.light import ATTR_SUPPORTED_COLOR_MODES, ColorMode
 from homeassistant.components.number import NumberEntity, NumberMode
-from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTemperature
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTemperature, UnitOfTime
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
-from . import LightWrapperConfigEntry
+from . import LightWrapperConfigEntry, normalize_default
 from .const import (
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
+    CONF_DEFAULT_TRANSITION_OFF,
+    CONF_DEFAULT_TRANSITION_ON,
     MAX_BRIGHTNESS_PCT,
     MAX_COLOR_TEMP_KELVIN,
+    MAX_TRANSITION,
     MIN_BRIGHTNESS_PCT,
     MIN_COLOR_TEMP_KELVIN,
+    MIN_TRANSITION,
+    TRANSITION_STEP,
 )
 from .entity import color_temp_range, device_info
 
@@ -26,14 +31,17 @@ async def async_setup_entry(
     entry: LightWrapperConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Nur für aktivierte Standardwerte eine Number-Entität anlegen."""
+    """Nur für aktivierte Standardwerte eine Number-Entität anlegen.
+
+    Gilt für Lichtgruppen und für den Eintrag „Globale Einstellungen“
+    (dort gibt es nur die Übergangszeiten).
+    """
     defaults = entry.runtime_data.defaults
-    entities: list[NumberEntity] = []
-    if CONF_DEFAULT_BRIGHTNESS in defaults:
-        entities.append(DefaultBrightnessNumber(entry))
-    if CONF_DEFAULT_COLOR_TEMP in defaults:
-        entities.append(DefaultColorTempNumber(entry))
-    async_add_entities(entities)
+    async_add_entities(
+        number_class(entry)
+        for key, number_class in _NUMBER_CLASSES.items()
+        if key in defaults
+    )
 
 
 class _DefaultValueNumber(NumberEntity):
@@ -61,7 +69,10 @@ class _DefaultValueNumber(NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         self.hass.config_entries.async_update_entry(
             self._entry,
-            options={**self._entry.options, self._option_key: int(round(value))},
+            options={
+                **self._entry.options,
+                self._option_key: normalize_default(self._option_key, value),
+            },
         )
 
 
@@ -113,3 +124,31 @@ class DefaultColorTempNumber(_DefaultValueNumber):
             for entity_id in self._data.entities
             if (state := self.hass.states.get(entity_id)) is not None
         )
+
+
+class _DefaultTransitionNumber(_DefaultValueNumber):
+    """Standard-Übergangszeit in Sekunden (0–10 s, 0,1-s-Schritte)."""
+
+    _attr_icon = "mdi:timer-outline"
+    _attr_native_min_value = MIN_TRANSITION
+    _attr_native_max_value = MAX_TRANSITION
+    _attr_native_step = TRANSITION_STEP
+    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
+
+
+class DefaultTransitionOnNumber(_DefaultTransitionNumber):
+    _option_key = CONF_DEFAULT_TRANSITION_ON
+    _attr_translation_key = "default_transition_on"
+
+
+class DefaultTransitionOffNumber(_DefaultTransitionNumber):
+    _option_key = CONF_DEFAULT_TRANSITION_OFF
+    _attr_translation_key = "default_transition_off"
+
+
+_NUMBER_CLASSES: dict[str, type[_DefaultValueNumber]] = {
+    CONF_DEFAULT_BRIGHTNESS: DefaultBrightnessNumber,
+    CONF_DEFAULT_COLOR_TEMP: DefaultColorTempNumber,
+    CONF_DEFAULT_TRANSITION_ON: DefaultTransitionOnNumber,
+    CONF_DEFAULT_TRANSITION_OFF: DefaultTransitionOffNumber,
+}

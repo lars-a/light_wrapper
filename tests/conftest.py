@@ -12,7 +12,12 @@ from homeassistant.const import CONF_ENTITIES
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
-from custom_components.light_wrapper.const import DOMAIN
+from custom_components.light_wrapper.const import (
+    CONF_ENTRY_TYPE,
+    DOMAIN,
+    ENTRY_TYPE_GLOBAL,
+    GLOBAL_UNIQUE_ID,
+)
 from custom_components.light_wrapper.light import LightWrapperLight
 
 WRAPPER_ID = "light.wohnzimmer"
@@ -54,7 +59,7 @@ def set_member(
 
 
 async def setup_wrapper(
-    hass: HomeAssistant, entities: list[str], **defaults: int | bool
+    hass: HomeAssistant, entities: list[str], **defaults: float | bool
 ) -> MockConfigEntry:
     """Einen Wrapper 'Wohnzimmer' anlegen und laden."""
     entry = MockConfigEntry(
@@ -62,6 +67,21 @@ async def setup_wrapper(
         title="Wohnzimmer",
         data={},
         options={CONF_ENTITIES: entities, **defaults},
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    return entry
+
+
+async def setup_global(hass: HomeAssistant, **options: float) -> MockConfigEntry:
+    """Den Eintrag „Globale Einstellungen“ anlegen und laden."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Globale Einstellungen",
+        unique_id=GLOBAL_UNIQUE_ID,
+        data={CONF_ENTRY_TYPE: ENTRY_TYPE_GLOBAL},
+        options=options,
     )
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
