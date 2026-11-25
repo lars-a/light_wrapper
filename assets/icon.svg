@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Light Wrapper: drei Lichter, von einem Rahmen zu einer Lichtentität zusammengefasst -->
+  <defs>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#FFE082" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFE082" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE57F"/>
+      <stop offset="1" stop-color="#FFB300"/>
+    </linearGradient>
+    <linearGradient id="glassDim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF3C4"/>
+      <stop offset="1" stop-color="#FFCA28"/>
+    </linearGradient>
+    <!-- Glühbirne, Ursprung = Mitte des Glaskolbens, Radius 30 -->
+    <g id="bulbBase">
+      <path d="M -13 34 L 13 34 L 13 46 Q 13 52 7 52 L -7 52 Q -13 52 -13 46 Z" fill="#78909C"/>
+      <rect x="-14" y="38" width="28" height="3.5" rx="1.75" fill="#546E7A"/>
+      <rect x="-14" y="44" width="28" height="3.5" rx="1.75" fill="#546E7A"/>
+    </g>
+    <path id="bulbGlass" d="M -16 34 C -16 24 -30 16 -30 0 A 30 30 0 1 1 30 0 C 30 16 16 24 16 34 Z"/>
+  </defs>
+
+  <!-- Rahmen ("Wrapper") -->
+  <rect x="14" y="14" width="228" height="228" rx="52" fill="#E3F2FD" stroke="#039BE5" stroke-width="14"/>
+
+  <!-- Schein hinter der mittleren Lampe -->
+  <circle cx="128" cy="104" r="78" fill="url(#glow)"/>
+
+  <!-- seitliche Lampen -->
+  <g transform="translate(70 128) scale(0.72)">
+    <use xlink:href="#bulbBase"/>
+    <use xlink:href="#bulbGlass" fill="url(#glassDim)" stroke="#F9A825" stroke-width="4"/>
+  </g>
+  <g transform="translate(186 128) scale(0.72)">
+    <use xlink:href="#bulbBase"/>
+    <use xlink:href="#bulbGlass" fill="url(#glassDim)" stroke="#F9A825" stroke-width="4"/>
+  </g>
+
+  <!-- mittlere Lampe -->
+  <g transform="translate(128 108) scale(1.18)">
+    <use xlink:href="#bulbBase"/>
+    <use xlink:href="#bulbGlass" fill="url(#glass)" stroke="#F57F17" stroke-width="3.5"/>
+    <path d="M -14 -8 A 16 16 0 0 1 -2 -18" fill="none" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Verbindungsleiste: alle drei hängen an einer Entität -->
+  <path d="M 70 176 L 70 196 L 186 196 L 186 176 M 128 176 L 128 196" fill="none" stroke="#039BE5" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

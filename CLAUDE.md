@@ -11,6 +11,7 @@ Sprache: Code-Kommentare, Docstrings, Commit-Messages und README sind auf Deutsc
   - `config_flow.py`: Config-Flow (anlegen) und Options-Flow (bearbeiten). Die Standardwerte sind Slider; ob sie verwendet werden, steuern die Schalter `use_default_*`. Diese Schalter werden **nicht** gespeichert: In `entry.options` steht ein Standardwert nur, wenn er aktiv ist.
   - `light.py`: die Gruppen-Lichtentität. `number.py`: Number-Entitäten für die Standardwerte. `entity.py`: gemeinsame Basis.
   - `translations/de.json` und `en.json`: bei jedem neuen Feld **beide** pflegen.
+  - `brand/icon.png` (256 px) und `icon@2x.png` (512 px): Icon, das Home Assistant ab 2026.3 anzeigt. Quelle ist `assets/icon.svg`; nach Änderungen beide PNGs neu rendern (z. B. mit `cairosvg`).
 - `tests/`: pytest mit `pytest-homeassistant-custom-component`.
 - `hacs.json`: HACS installiert die ZIP-Datei aus dem Release (`zip_release`).
 

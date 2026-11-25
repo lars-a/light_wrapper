@@ -19,7 +19,7 @@ Weitere Wrapper legst du auf der Seite der Integration (**Geräte & Dienste → 
 
 Den Ordner `custom_components/light_wrapper` nach `<config>/custom_components/light_wrapper` kopieren, Home Assistant neu starten und weiter mit Schritt 5.
 
-Benötigt Home Assistant 2025.2 oder neuer.
+Benötigt Home Assistant 2025.2 oder neuer. Das Icon der Integration (`custom_components/light_wrapper/brand/`) zeigt Home Assistant ab Version 2026.3 an; ältere Versionen zeigen stattdessen einen Platzhalter.
 
 ## Was angelegt wird
 
