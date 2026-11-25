@@ -29,14 +29,14 @@ def device_info(entry: ConfigEntry, subentry: ConfigSubentry | None) -> DeviceIn
             translation_key="global",
             entry_type=DeviceEntryType.SERVICE,
             manufacturer="Light Wrapper",
-            model="Globale Einstellungen",
+            model="Global settings",
         )
     return DeviceInfo(
         identifiers={(DOMAIN, subentry.subentry_id)},
         name=subentry.title,
         entry_type=DeviceEntryType.SERVICE,
         manufacturer="Light Wrapper",
-        model="Lichtgruppe",
+        model="Light group",
     )
 
 
