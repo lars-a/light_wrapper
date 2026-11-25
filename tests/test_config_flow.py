@@ -172,3 +172,54 @@ async def test_options_flow_enables_default_with_slider_fallback(hass: HomeAssis
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options == {CONF_ENTITIES: [CT_LIGHT], CONF_DEFAULT_BRIGHTNESS: 100}
+
+
+def _color_temp_selector_config(result) -> dict:
+    for key, value in result["data_schema"].schema.items():
+        if str(key) == CONF_DEFAULT_COLOR_TEMP:
+            return value.config
+    raise AssertionError("Kein Farbtemperatur-Slider im Formular")
+
+
+async def test_options_flow_color_temp_slider_uses_common_range(hass: HomeAssistant) -> None:
+    set_member(hass, CT_LIGHT, "off", min_kelvin=2200, max_kelvin=6500)
+    set_member(hass, "light.spot", "off", min_kelvin=2700, max_kelvin=5000)
+    entry = await setup_wrapper(
+        hass, [CT_LIGHT, "light.spot"], **{CONF_DEFAULT_COLOR_TEMP: 2000}
+    )
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    config = _color_temp_selector_config(result)
+    assert (config["min"], config["max"]) == (2700, 5000)
+
+    # Gespeicherter Wert außerhalb des Bereichs wird für den Slider begrenzt
+    suggested = {
+        str(key): key.description["suggested_value"]
+        for key in result["data_schema"].schema
+        if key.description and "suggested_value" in key.description
+    }
+    assert suggested[CONF_DEFAULT_COLOR_TEMP] == 2700
+
+
+async def test_user_flow_clamps_color_temp_to_selected_lights(hass: HomeAssistant) -> None:
+    set_member(hass, CT_LIGHT, "off", min_kelvin=2700, max_kelvin=5000)
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    config = _color_temp_selector_config(result)
+    assert (config["min"], config["max"]) == (2000, 6500)  # Lichter noch nicht gewählt
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            CONF_NAME: "Flur",
+            CONF_ENTITIES: [CT_LIGHT],
+            CONF_USE_DEFAULT_COLOR_TEMP: True,
+            CONF_DEFAULT_COLOR_TEMP: 6500,
+        },
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["options"][CONF_DEFAULT_COLOR_TEMP] == 5000
