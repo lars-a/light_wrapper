@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import voluptuous as vol
@@ -21,6 +22,8 @@ from .const import (
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
     DOMAIN,
+    FALLBACK_BRIGHTNESS_PCT,
+    FALLBACK_COLOR_TEMP_KELVIN,
     MAX_BRIGHTNESS_PCT,
     MAX_COLOR_TEMP_KELVIN,
     MIN_BRIGHTNESS_PCT,
@@ -28,8 +31,18 @@ from .const import (
 )
 
 
+# Schalter, ob ein Standardwert verwendet wird (werden nicht gespeichert)
+CONF_USE_DEFAULT_BRIGHTNESS = "use_default_brightness"
+CONF_USE_DEFAULT_COLOR_TEMP = "use_default_color_temp"
+
+# Schalter -> Wert, mit Startwert für den Slider, solange noch nichts gespeichert ist
+_TOGGLES: dict[str, tuple[str, int]] = {
+    CONF_USE_DEFAULT_BRIGHTNESS: (CONF_DEFAULT_BRIGHTNESS, FALLBACK_BRIGHTNESS_PCT),
+    CONF_USE_DEFAULT_COLOR_TEMP: (CONF_DEFAULT_COLOR_TEMP, FALLBACK_COLOR_TEMP_KELVIN),
+}
+
+
 def _options_schema(exclude_entities: list[str]) -> vol.Schema:
-    # BOX statt SLIDER, damit optionale Felder geleert (= Standardwert deaktiviert) werden können
     return vol.Schema(
         {
             vol.Required(CONF_ENTITIES): selector.EntitySelector(
@@ -39,33 +52,46 @@ def _options_schema(exclude_entities: list[str]) -> vol.Schema:
                     exclude_entities=exclude_entities,
                 )
             ),
+            vol.Optional(CONF_USE_DEFAULT_BRIGHTNESS): selector.BooleanSelector(),
             vol.Optional(CONF_DEFAULT_BRIGHTNESS): selector.NumberSelector(
                 selector.NumberSelectorConfig(
                     min=MIN_BRIGHTNESS_PCT,
                     max=MAX_BRIGHTNESS_PCT,
                     step=1,
                     unit_of_measurement="%",
-                    mode=selector.NumberSelectorMode.BOX,
+                    mode=selector.NumberSelectorMode.SLIDER,
                 )
             ),
+            vol.Optional(CONF_USE_DEFAULT_COLOR_TEMP): selector.BooleanSelector(),
             vol.Optional(CONF_DEFAULT_COLOR_TEMP): selector.NumberSelector(
                 selector.NumberSelectorConfig(
                     min=MIN_COLOR_TEMP_KELVIN,
                     max=MAX_COLOR_TEMP_KELVIN,
                     step=50,
                     unit_of_measurement="K",
-                    mode=selector.NumberSelectorMode.BOX,
+                    mode=selector.NumberSelectorMode.SLIDER,
                 )
             ),
         }
     )
 
 
+def _form_values(options: Mapping[str, Any]) -> dict[str, Any]:
+    """Gespeicherte Optionen in Formularwerte (Schalter + Slider) umwandeln."""
+    values: dict[str, Any] = {CONF_ENTITIES: list(options.get(CONF_ENTITIES, []))}
+    for toggle, (key, fallback) in _TOGGLES.items():
+        values[toggle] = options.get(key) is not None
+        values[key] = options[key] if options.get(key) is not None else fallback
+    return values
+
+
 def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
+    """Formularwerte in Optionen umwandeln; abgeschaltete Standardwerte entfallen."""
     options: dict[str, Any] = {CONF_ENTITIES: list(user_input.get(CONF_ENTITIES, []))}
-    for key in (CONF_DEFAULT_BRIGHTNESS, CONF_DEFAULT_COLOR_TEMP):
-        if user_input.get(key) is not None:
-            options[key] = int(round(user_input[key]))
+    for toggle, (key, fallback) in _TOGGLES.items():
+        if user_input.get(toggle):
+            value = user_input.get(key)
+            options[key] = int(round(value if value is not None else fallback))
     return options
 
 
@@ -95,7 +121,9 @@ class LightWrapperConfigFlow(ConfigFlow, domain=DOMAIN):
         )
         return self.async_show_form(
             step_id="user",
-            data_schema=self.add_suggested_values_to_schema(schema, user_input or {}),
+            data_schema=self.add_suggested_values_to_schema(
+                schema, user_input or _form_values({})
+            ),
             errors=errors,
         )
 
@@ -120,7 +148,7 @@ class LightWrapperOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
-                schema, user_input or dict(self.config_entry.options)
+                schema, user_input or _form_values(self.config_entry.options)
             ),
             errors=errors,
         )

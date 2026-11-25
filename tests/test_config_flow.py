@@ -12,6 +12,10 @@ from custom_components.light_wrapper.const import (
     CONF_DEFAULT_COLOR_TEMP,
     DOMAIN,
 )
+from custom_components.light_wrapper.config_flow import (
+    CONF_USE_DEFAULT_BRIGHTNESS,
+    CONF_USE_DEFAULT_COLOR_TEMP,
+)
 
 from .conftest import number_entity_id, set_member, setup_wrapper
 
@@ -34,7 +38,9 @@ async def test_user_flow_creates_entry(hass: HomeAssistant) -> None:
         {
             CONF_NAME: "Wohnzimmer",
             CONF_ENTITIES: [CT_LIGHT, DIM_LIGHT],
+            CONF_USE_DEFAULT_BRIGHTNESS: True,
             CONF_DEFAULT_BRIGHTNESS: 60,
+            CONF_USE_DEFAULT_COLOR_TEMP: True,
             CONF_DEFAULT_COLOR_TEMP: 2700,
         },
     )
@@ -55,8 +61,17 @@ async def test_user_flow_without_defaults(hass: HomeAssistant) -> None:
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
+    # Slider haben immer einen Wert; ausschlaggebend sind die Schalter
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {CONF_NAME: "Flur", CONF_ENTITIES: [CT_LIGHT]}
+        result["flow_id"],
+        {
+            CONF_NAME: "Flur",
+            CONF_ENTITIES: [CT_LIGHT],
+            CONF_USE_DEFAULT_BRIGHTNESS: False,
+            CONF_DEFAULT_BRIGHTNESS: 80,
+            CONF_USE_DEFAULT_COLOR_TEMP: False,
+            CONF_DEFAULT_COLOR_TEMP: 4000,
+        },
     )
     await hass.async_block_till_done()
 
@@ -87,10 +102,27 @@ async def test_options_flow_changes_members_and_disables_default(hass: HomeAssis
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "init"
 
-    # Helligkeit leer lassen = deaktivieren, Stehlampe hinzufügen
+    # Gespeicherte Werte werden als Schalter + Slider vorbelegt
+    suggested = {
+        str(key): key.description["suggested_value"]
+        for key in result["data_schema"].schema
+        if key.description and "suggested_value" in key.description
+    }
+    assert suggested[CONF_USE_DEFAULT_BRIGHTNESS] is True
+    assert suggested[CONF_DEFAULT_BRIGHTNESS] == 60
+    assert suggested[CONF_USE_DEFAULT_COLOR_TEMP] is True
+    assert suggested[CONF_DEFAULT_COLOR_TEMP] == 2700
+
+    # Helligkeit abschalten, Stehlampe hinzufügen
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
-        {CONF_ENTITIES: [CT_LIGHT, DIM_LIGHT], CONF_DEFAULT_COLOR_TEMP: 3000},
+        {
+            CONF_ENTITIES: [CT_LIGHT, DIM_LIGHT],
+            CONF_USE_DEFAULT_BRIGHTNESS: False,
+            CONF_DEFAULT_BRIGHTNESS: 60,
+            CONF_USE_DEFAULT_COLOR_TEMP: True,
+            CONF_DEFAULT_COLOR_TEMP: 3000,
+        },
     )
     await hass.async_block_till_done()
 
@@ -116,3 +148,27 @@ async def test_options_flow_requires_lights(hass: HomeAssistant) -> None:
     )
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {CONF_ENTITIES: "no_entities"}
+
+
+async def test_options_flow_enables_default_with_slider_fallback(hass: HomeAssistant) -> None:
+    set_member(hass, CT_LIGHT, "off")
+    entry = await setup_wrapper(hass, [CT_LIGHT])
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    suggested = {
+        str(key): key.description["suggested_value"]
+        for key in result["data_schema"].schema
+        if key.description and "suggested_value" in key.description
+    }
+    assert suggested[CONF_USE_DEFAULT_BRIGHTNESS] is False
+    assert suggested[CONF_DEFAULT_BRIGHTNESS] == 100
+
+    # Schalter an, Slider nicht angefasst -> Startwert wird übernommen
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {CONF_ENTITIES: [CT_LIGHT], CONF_USE_DEFAULT_BRIGHTNESS: True},
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options == {CONF_ENTITIES: [CT_LIGHT], CONF_DEFAULT_BRIGHTNESS: 100}

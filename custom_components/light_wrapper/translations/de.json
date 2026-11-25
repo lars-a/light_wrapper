@@ -7,12 +7,14 @@
         "data": {
           "name": "Name",
           "entities": "Lichter",
+          "use_default_brightness": "Standardhelligkeit verwenden",
           "default_brightness_pct": "Standardhelligkeit",
+          "use_default_color_temp": "Standard-Farbtemperatur verwenden",
           "default_color_temp_kelvin": "Standard-Farbtemperatur"
         },
         "data_description": {
-          "default_brightness_pct": "Leer lassen, um keine Standardhelligkeit zu verwenden.",
-          "default_color_temp_kelvin": "Wird nur an Lichter gesendet, die Farbtemperatur unterstützen. Leer lassen, um sie nicht zu verwenden."
+          "default_brightness_pct": "Wird beim Einschalten verwendet, wenn keine Helligkeit angegeben ist.",
+          "default_color_temp_kelvin": "Wird beim Einschalten verwendet, wenn keine Farbe angegeben ist; nur an Lichter, die Farbtemperatur unterstützen."
         }
       }
     },
@@ -26,12 +28,14 @@
         "title": "Light Wrapper bearbeiten",
         "data": {
           "entities": "Lichter",
+          "use_default_brightness": "Standardhelligkeit verwenden",
           "default_brightness_pct": "Standardhelligkeit",
+          "use_default_color_temp": "Standard-Farbtemperatur verwenden",
           "default_color_temp_kelvin": "Standard-Farbtemperatur"
         },
         "data_description": {
-          "default_brightness_pct": "Leer lassen, um keine Standardhelligkeit zu verwenden.",
-          "default_color_temp_kelvin": "Wird nur an Lichter gesendet, die Farbtemperatur unterstützen. Leer lassen, um sie nicht zu verwenden."
+          "default_brightness_pct": "Wird beim Einschalten verwendet, wenn keine Helligkeit angegeben ist.",
+          "default_color_temp_kelvin": "Wird beim Einschalten verwendet, wenn keine Farbe angegeben ist; nur an Lichter, die Farbtemperatur unterstützen."
         }
       }
     },
@@ -41,8 +45,12 @@
   },
   "entity": {
     "number": {
-      "default_brightness": { "name": "Standardhelligkeit" },
-      "default_color_temp": { "name": "Standard-Farbtemperatur" }
+      "default_brightness": {
+        "name": "Standardhelligkeit"
+      },
+      "default_color_temp": {
+        "name": "Standard-Farbtemperatur"
+      }
     }
   }
 }

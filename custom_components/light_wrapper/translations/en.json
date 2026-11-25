@@ -7,12 +7,14 @@
         "data": {
           "name": "Name",
           "entities": "Lights",
+          "use_default_brightness": "Use default brightness",
           "default_brightness_pct": "Default brightness",
+          "use_default_color_temp": "Use default color temperature",
           "default_color_temp_kelvin": "Default color temperature"
         },
         "data_description": {
-          "default_brightness_pct": "Leave empty to use no default brightness.",
-          "default_color_temp_kelvin": "Only sent to lights that support color temperature. Leave empty to disable."
+          "default_brightness_pct": "Used when the light is turned on without a brightness.",
+          "default_color_temp_kelvin": "Used when the light is turned on without a color; only sent to lights that support color temperature."
         }
       }
     },
@@ -26,12 +28,14 @@
         "title": "Edit Light Wrapper",
         "data": {
           "entities": "Lights",
+          "use_default_brightness": "Use default brightness",
           "default_brightness_pct": "Default brightness",
+          "use_default_color_temp": "Use default color temperature",
           "default_color_temp_kelvin": "Default color temperature"
         },
         "data_description": {
-          "default_brightness_pct": "Leave empty to use no default brightness.",
-          "default_color_temp_kelvin": "Only sent to lights that support color temperature. Leave empty to disable."
+          "default_brightness_pct": "Used when the light is turned on without a brightness.",
+          "default_color_temp_kelvin": "Used when the light is turned on without a color; only sent to lights that support color temperature."
         }
       }
     },
@@ -41,8 +45,12 @@
   },
   "entity": {
     "number": {
-      "default_brightness": { "name": "Default brightness" },
-      "default_color_temp": { "name": "Default color temperature" }
+      "default_brightness": {
+        "name": "Default brightness"
+      },
+      "default_color_temp": {
+        "name": "Default color temperature"
+      }
     }
   }
 }

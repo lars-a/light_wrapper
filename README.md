@@ -31,7 +31,7 @@ Pro Wrapper entsteht ein Gerät mit:
 | `number.<name>_standardhelligkeit` | Standardhelligkeit in % (nur wenn aktiviert) |
 | `number.<name>_standard_farbtemperatur` | Standard-Farbtemperatur in K (nur wenn aktiviert; nicht verfügbar, wenn keines der Lichter Farbtemperatur kann) |
 
-Über die Number-Entitäten kannst du die Werte im Dashboard oder per Automation ändern, zum Beispiel tagsüber kühl und hell, abends warm und gedimmt. Aktivieren oder deaktivieren lassen sich die Standardwerte unter **Konfigurieren** (Feld leeren = deaktiviert).
+Über die Number-Entitäten kannst du die Werte im Dashboard oder per Automation ändern, zum Beispiel tagsüber kühl und hell, abends warm und gedimmt. Aktivieren oder deaktivieren lassen sich die Standardwerte unter **Konfigurieren** über die Schalter „… verwenden“; den Wert selbst stellst du dort per Slider ein.
 
 ## Verhalten beim Einschalten
 
