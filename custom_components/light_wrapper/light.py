@@ -22,6 +22,7 @@ from homeassistant.components.light import (
     ATTR_RGBW_COLOR,
     ATTR_RGBWW_COLOR,
     ATTR_SUPPORTED_COLOR_MODES,
+    ATTR_TRANSITION,
     ATTR_WHITE,
     ATTR_XY_COLOR,
     DOMAIN as LIGHT_DOMAIN,
@@ -59,6 +60,9 @@ COLOR_PARAMS = {
     ATTR_WHITE,
     ATTR_EFFECT,
 }
+
+# Parameter, die bei schon eingeschalteter Gruppe noch als „ohne Parameter“ gelten
+PASSIVE_PARAMS = {ATTR_TRANSITION}
 
 SUPPORTED_FEATURES_MASK = (
     LightEntityFeature.EFFECT | LightEntityFeature.FLASH | LightEntityFeature.TRANSITION
@@ -240,18 +244,25 @@ class LightWrapperLight(LightEntity):
     # ----------------------------------------------------------------- actions
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Einschalten; Standardwerte nur, wenn die Gruppe aus war und nichts vorgegeben ist."""
+        """Einschalten mit Standardwerten.
+
+        War die Gruppe aus, gilt jeder Standardwert, dessen Größe nicht vorgegeben ist.
+        Ist sie schon an, gelten die Standardwerte nur, wenn der Schalter „auch wenn an“
+        aktiv ist und außer einem Übergang keine Parameter angegeben sind.
+        """
         defaults = self._data.defaults
-        switching_on = self.is_on is not True
+        apply_defaults = self.is_on is not True or (
+            self._data.apply_when_on and not kwargs.keys() - PASSIVE_PARAMS
+        )
 
         brightness_pct = (
             defaults.get(CONF_DEFAULT_BRIGHTNESS)
-            if switching_on and not kwargs.keys() & BRIGHTNESS_PARAMS
+            if apply_defaults and not kwargs.keys() & BRIGHTNESS_PARAMS
             else None
         )
         color_temp = (
             defaults.get(CONF_DEFAULT_COLOR_TEMP)
-            if switching_on and not kwargs.keys() & COLOR_PARAMS
+            if apply_defaults and not kwargs.keys() & COLOR_PARAMS
             else None
         )
 

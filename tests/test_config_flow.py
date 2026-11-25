@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.light_wrapper.const import (
+    CONF_APPLY_WHEN_ON,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
     DOMAIN,
@@ -42,6 +43,7 @@ async def test_user_flow_creates_entry(hass: HomeAssistant) -> None:
             CONF_DEFAULT_BRIGHTNESS: 60,
             CONF_USE_DEFAULT_COLOR_TEMP: True,
             CONF_DEFAULT_COLOR_TEMP: 2700,
+            CONF_APPLY_WHEN_ON: True,
         },
     )
     await hass.async_block_till_done()
@@ -53,6 +55,7 @@ async def test_user_flow_creates_entry(hass: HomeAssistant) -> None:
         CONF_ENTITIES: [CT_LIGHT, DIM_LIGHT],
         CONF_DEFAULT_BRIGHTNESS: 60,
         CONF_DEFAULT_COLOR_TEMP: 2700,
+        CONF_APPLY_WHEN_ON: True,
     }
     assert hass.states.get("light.wohnzimmer") is not None
 
@@ -71,6 +74,7 @@ async def test_user_flow_without_defaults(hass: HomeAssistant) -> None:
             CONF_DEFAULT_BRIGHTNESS: 80,
             CONF_USE_DEFAULT_COLOR_TEMP: False,
             CONF_DEFAULT_COLOR_TEMP: 4000,
+            CONF_APPLY_WHEN_ON: False,
         },
     )
     await hass.async_block_till_done()
@@ -112,6 +116,7 @@ async def test_options_flow_changes_members_and_disables_default(hass: HomeAssis
     assert suggested[CONF_DEFAULT_BRIGHTNESS] == 60
     assert suggested[CONF_USE_DEFAULT_COLOR_TEMP] is True
     assert suggested[CONF_DEFAULT_COLOR_TEMP] == 2700
+    assert suggested[CONF_APPLY_WHEN_ON] is False
 
     # Helligkeit abschalten, Stehlampe hinzufügen
     result = await hass.config_entries.options.async_configure(
@@ -199,6 +204,7 @@ async def test_options_flow_color_temp_slider_uses_common_range(hass: HomeAssist
         if key.description and "suggested_value" in key.description
     }
     assert suggested[CONF_DEFAULT_COLOR_TEMP] == 2700
+    assert suggested[CONF_APPLY_WHEN_ON] is False
 
 
 async def test_user_flow_clamps_color_temp_to_selected_lights(hass: HomeAssistant) -> None:

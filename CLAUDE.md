@@ -9,7 +9,7 @@ Sprache: Code-Kommentare, Docstrings, Commit-Messages und README sind auf Deutsc
 - `custom_components/light_wrapper/`
   - `__init__.py`: Setup und Laufzeitdaten (`LightWrapperData`). Der Update-Listener lädt nur neu, wenn sich die Lichter ändern oder ein Standardwert an- bzw. abgeschaltet wird. Reine Wertänderungen (z. B. über die Number-Entitäten) gehen ohne Reload durch.
   - `config_flow.py`: Config-Flow (anlegen) und Options-Flow (bearbeiten). Die Standardwerte sind Slider; ob sie verwendet werden, steuern die Schalter `use_default_*`. Diese Schalter werden **nicht** gespeichert: In `entry.options` steht ein Standardwert nur, wenn er aktiv ist.
-  - `light.py`: die Gruppen-Lichtentität. `number.py`: Number-Entitäten für die Standardwerte. `entity.py`: gemeinsame Basis.
+  - `light.py`: die Gruppen-Lichtentität. `number.py`: Number-Entitäten für die Standardwerte. `switch.py`: Schalter „Standardwerte auch wenn an“ (`apply_defaults_when_on`; steht nur in `entry.options`, wenn aktiv, und wird ohne Reload übernommen). `entity.py`: gemeinsame Basis.
   - `translations/de.json` und `en.json`: bei jedem neuen Feld **beide** pflegen.
   - `brand/icon.png` (256 px) und `icon@2x.png` (512 px): Icon, das Home Assistant ab 2026.3 anzeigt. Quelle ist `assets/icon.svg`; nach Änderungen beide PNGs neu rendern (z. B. mit `cairosvg`).
 - `tests/`: pytest mit `pytest-homeassistant-custom-component`.
@@ -28,9 +28,11 @@ Sprache: Code-Kommentare, Docstrings, Commit-Messages und README sind auf Deutsc
 
 ## Release (damit HACS ein Update anbietet)
 
+Ein Release wird **nur auf ausdrückliche Anweisung** des Nutzers erstellt, nicht von sich aus nach einem Feature oder Fix. Auch die Version im Manifest wird erst im Rahmen eines beauftragten Releases erhöht.
+
 1. `version` in `custom_components/light_wrapper/manifest.json` erhöhen (SemVer).
 2. Commit auf `main`, pushen und warten, bis „Validate“ grün ist.
 3. `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Änderungen auf Deutsch>"`
 4. `.github/workflows/release.yml` setzt die Version aus dem Tag ins Manifest und hängt `light_wrapper.zip` an. Prüfen mit `gh release view vX.Y.Z --json assets`.
 
-Ohne Release sieht HACS keine neue Version. Reine Doku-Änderungen brauchen kein Release.
+Ohne Release sieht HACS keine neue Version. Reine Doku-Änderungen brauchen kein Release. Nach einer Änderung, die HACS-Nutzer betrifft, darf ein Release vorgeschlagen, aber nicht ungefragt erstellt werden.

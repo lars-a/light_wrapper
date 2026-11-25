@@ -10,6 +10,9 @@ CONF_DEFAULT_COLOR_TEMP = "default_color_temp_kelvin"
 
 DEFAULT_KEYS = (CONF_DEFAULT_BRIGHTNESS, CONF_DEFAULT_COLOR_TEMP)
 
+# Standardwerte auch anwenden, wenn die Gruppe schon an ist (nur gespeichert, wenn aktiv)
+CONF_APPLY_WHEN_ON = "apply_defaults_when_on"
+
 # Wertebereiche für die Einstellungen
 MIN_BRIGHTNESS_PCT = 1
 MAX_BRIGHTNESS_PCT = 100

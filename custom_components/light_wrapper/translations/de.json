@@ -10,11 +10,13 @@
           "use_default_brightness": "Standardhelligkeit verwenden",
           "default_brightness_pct": "Standardhelligkeit",
           "use_default_color_temp": "Standard-Farbtemperatur verwenden",
-          "default_color_temp_kelvin": "Standard-Farbtemperatur"
+          "default_color_temp_kelvin": "Standard-Farbtemperatur",
+          "apply_defaults_when_on": "Standardwerte auch bei eingeschaltetem Licht"
         },
         "data_description": {
           "default_brightness_pct": "Wird beim Einschalten verwendet, wenn keine Helligkeit angegeben ist.",
-          "default_color_temp_kelvin": "Wird beim Einschalten verwendet, wenn keine Farbe angegeben ist; nur an Lichter, die Farbtemperatur unterstützen."
+          "default_color_temp_kelvin": "Wird beim Einschalten verwendet, wenn keine Farbe angegeben ist; nur an Lichter, die Farbtemperatur unterstützen.",
+          "apply_defaults_when_on": "Ein Einschalten ohne Parameter setzt die Standardwerte auch dann, wenn die Gruppe schon an ist."
         }
       }
     },
@@ -31,11 +33,13 @@
           "use_default_brightness": "Standardhelligkeit verwenden",
           "default_brightness_pct": "Standardhelligkeit",
           "use_default_color_temp": "Standard-Farbtemperatur verwenden",
-          "default_color_temp_kelvin": "Standard-Farbtemperatur"
+          "default_color_temp_kelvin": "Standard-Farbtemperatur",
+          "apply_defaults_when_on": "Standardwerte auch bei eingeschaltetem Licht"
         },
         "data_description": {
           "default_brightness_pct": "Wird beim Einschalten verwendet, wenn keine Helligkeit angegeben ist.",
-          "default_color_temp_kelvin": "Wird beim Einschalten verwendet, wenn keine Farbe angegeben ist; nur an Lichter, die Farbtemperatur unterstützen."
+          "default_color_temp_kelvin": "Wird beim Einschalten verwendet, wenn keine Farbe angegeben ist; nur an Lichter, die Farbtemperatur unterstützen.",
+          "apply_defaults_when_on": "Ein Einschalten ohne Parameter setzt die Standardwerte auch dann, wenn die Gruppe schon an ist."
         }
       }
     },
@@ -50,6 +54,11 @@
       },
       "default_color_temp": {
         "name": "Standard-Farbtemperatur"
+      }
+    },
+    "switch": {
+      "apply_defaults_when_on": {
+        "name": "Standardwerte auch wenn an"
       }
     }
   }

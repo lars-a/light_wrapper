@@ -22,6 +22,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 
 from custom_components.light_wrapper.const import (
+    CONF_APPLY_WHEN_ON,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
 )
@@ -178,6 +179,56 @@ async def test_no_defaults_when_already_on(hass: HomeAssistant, member_calls) ->
     await _turn_on(hass)
 
     assert calls_by_entity(member_calls)[CT_LIGHT] == (SERVICE_TURN_ON, {})
+
+
+async def test_defaults_when_already_on_with_switch(hass: HomeAssistant, member_calls) -> None:
+    set_member(hass, CT_LIGHT, "on", brightness=20, kelvin=5000)
+    set_member(hass, DIM_LIGHT, "on", modes=("brightness",), brightness=20)
+    await setup_wrapper(
+        hass,
+        [CT_LIGHT, DIM_LIGHT],
+        **{CONF_DEFAULT_BRIGHTNESS: 60, CONF_DEFAULT_COLOR_TEMP: 2700, CONF_APPLY_WHEN_ON: True},
+    )
+
+    await _turn_on(hass)
+
+    calls = calls_by_entity(member_calls)
+    assert calls[CT_LIGHT] == (
+        SERVICE_TURN_ON,
+        {ATTR_BRIGHTNESS_PCT: 60, ATTR_COLOR_TEMP_KELVIN: 2700},
+    )
+    assert calls[DIM_LIGHT] == (SERVICE_TURN_ON, {ATTR_BRIGHTNESS_PCT: 60})
+
+
+async def test_defaults_when_already_on_with_switch_keep_transition(
+    hass: HomeAssistant, member_calls
+) -> None:
+    features = int(LightEntityFeature.TRANSITION)
+    set_member(hass, CT_LIGHT, "on", brightness=20, kelvin=5000, features=features)
+    await setup_wrapper(
+        hass, [CT_LIGHT], **{CONF_DEFAULT_BRIGHTNESS: 60, CONF_APPLY_WHEN_ON: True}
+    )
+
+    await _turn_on(hass, transition=2)
+
+    assert calls_by_entity(member_calls)[CT_LIGHT] == (
+        SERVICE_TURN_ON,
+        {ATTR_TRANSITION: 2, ATTR_BRIGHTNESS_PCT: 60},
+    )
+
+
+async def test_already_on_with_switch_but_params_given(hass: HomeAssistant, member_calls) -> None:
+    set_member(hass, CT_LIGHT, "on", brightness=20, kelvin=5000)
+    await setup_wrapper(
+        hass,
+        [CT_LIGHT],
+        **{CONF_DEFAULT_BRIGHTNESS: 60, CONF_DEFAULT_COLOR_TEMP: 2700, CONF_APPLY_WHEN_ON: True},
+    )
+
+    # Nur die Helligkeit ändern: Farbtemperatur bleibt, wie sie ist
+    await _turn_on(hass, brightness=100)
+
+    assert calls_by_entity(member_calls)[CT_LIGHT] == (SERVICE_TURN_ON, {ATTR_BRIGHTNESS: 100})
 
 
 async def test_turn_on_without_defaults_passes_through(hass: HomeAssistant, member_calls) -> None:

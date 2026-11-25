@@ -54,7 +54,7 @@ def set_member(
 
 
 async def setup_wrapper(
-    hass: HomeAssistant, entities: list[str], **defaults: int
+    hass: HomeAssistant, entities: list[str], **defaults: int | bool
 ) -> MockConfigEntry:
     """Einen Wrapper 'Wohnzimmer' anlegen und laden."""
     entry = MockConfigEntry(
@@ -73,6 +73,13 @@ def number_entity_id(hass: HomeAssistant, entry: MockConfigEntry, option_key: st
     """Entity-ID einer Number-Entität über ihre unique_id finden."""
     return er.async_get(hass).async_get_entity_id(
         "number", DOMAIN, f"{entry.entry_id}_{option_key}"
+    )
+
+
+def switch_entity_id(hass: HomeAssistant, entry: MockConfigEntry, option_key: str) -> str | None:
+    """Entity-ID einer Switch-Entität über ihre unique_id finden."""
+    return er.async_get(hass).async_get_entity_id(
+        "switch", DOMAIN, f"{entry.entry_id}_{option_key}"
     )
 
 

@@ -10,9 +10,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ENTITIES, Platform
 from homeassistant.core import HomeAssistant, callback
 
-from .const import DEFAULT_KEYS
+from .const import CONF_APPLY_WHEN_ON, DEFAULT_KEYS
 
-PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.NUMBER]
+PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.NUMBER, Platform.SWITCH]
 
 
 @dataclass
@@ -21,11 +21,12 @@ class LightWrapperData:
 
     entities: list[str]
     defaults: dict[str, int]
+    apply_when_on: bool = False
     _listeners: list[Callable[[], None]] = field(default_factory=list)
 
     @callback
     def async_add_listener(self, update_callback: Callable[[], None]) -> Callable[[], None]:
-        """Callback registrieren, der bei geänderten Standardwerten aufgerufen wird."""
+        """Callback registrieren, der bei geänderten Einstellungen aufgerufen wird."""
         self._listeners.append(update_callback)
 
         @callback
@@ -36,9 +37,10 @@ class LightWrapperData:
         return _remove
 
     @callback
-    def async_set_defaults(self, defaults: dict[str, int]) -> None:
-        """Standardwerte ersetzen und Listener informieren."""
+    def async_set_settings(self, defaults: dict[str, int], apply_when_on: bool) -> None:
+        """Standardwerte und Verhalten bei eingeschalteter Gruppe ersetzen, Listener informieren."""
         self.defaults = defaults
+        self.apply_when_on = apply_when_on
         for update_callback in list(self._listeners):
             update_callback()
 
@@ -58,6 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry)
     entry.runtime_data = LightWrapperData(
         entities=list(entry.options.get(CONF_ENTITIES, [])),
         defaults=defaults_from_options(entry.options),
+        apply_when_on=bool(entry.options.get(CONF_APPLY_WHEN_ON, False)),
     )
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -67,7 +70,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry)
 async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigEntry) -> None:
     """Auf geänderte Optionen reagieren.
 
-    Ändern sich nur die Werte der Standardwerte (z. B. über die Number-Entitäten),
+    Ändern sich nur die Werte der Standardwerte (z. B. über die Number-Entitäten)
+    oder der Schalter „auch wenn an“,
     wird nicht neu geladen, damit die Lichtentität nicht kurz verschwindet.
     Ändern sich die Lichter oder wird ein Standardwert an- bzw. abgeschaltet,
     wird der Entry neu geladen.
@@ -77,7 +81,7 @@ async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigE
     new_defaults = defaults_from_options(entry.options)
 
     if new_entities == data.entities and new_defaults.keys() == data.defaults.keys():
-        data.async_set_defaults(new_defaults)
+        data.async_set_settings(new_defaults, bool(entry.options.get(CONF_APPLY_WHEN_ON, False)))
         return
 
     await hass.config_entries.async_reload(entry.entry_id)
