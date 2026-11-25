@@ -4,19 +4,30 @@ Fasst mehrere physische Lichter zu **einer** Lichtentität zusammen, die sich wi
 
 ## Installation
 
-### Über HACS
+### Über den Marketplace bzw. HACS
 
-Voraussetzung ist ein installiertes [HACS](https://hacs.xyz). Die Schaltflächen unten öffnen die passende Seite direkt in deinem Home Assistant (über [My Home Assistant](https://my.home-assistant.io); beim ersten Aufruf fragt die Seite nach der Adresse deiner Instanz).
+Ab Home Assistant **2026.11** ist HACS als **Marketplace** fest eingebaut (**Einstellungen → Marketplace**); eine eigene HACS-Installation ist dann weder nötig noch möglich. Bei älteren Versionen muss [HACS](https://hacs.xyz) installiert sein.
+
+Die Schaltflächen unten öffnen die passende Seite direkt in deinem Home Assistant (über [My Home Assistant](https://my.home-assistant.io); beim ersten Aufruf fragt die Seite nach der Adresse deiner Instanz).
 
 **Repository hinzufügen und installieren**
+
+Ab 2026.11 (Marketplace):
+
+1. **Einstellungen → Marketplace** öffnen und über **Per Link hinzufügen** das Repository `https://github.com/lars-a/light_wrapper` (Typ **Integration**) hinzufügen.
+2. **Light Wrapper** öffnen, auf **Herunterladen** klicken und die neueste Version wählen.
+3. Home Assistant neu starten.
+
+Vor 2026.11 (HACS):
 
 [![Repository in HACS öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lars-a&repository=light_wrapper&category=integration)
 
 1. Auf die Schaltfläche klicken. HACS fragt, ob das Repository `lars-a/light_wrapper` als benutzerdefiniertes Repository hinzugefügt werden soll; mit **Hinzufügen** bestätigen.
-2. In HACS auf **Herunterladen** klicken und die neueste Version wählen.
+   Ohne Schaltfläche: **HACS** öffnen → Menü (⋮) → **Benutzerdefinierte Repositories** → `https://github.com/lars-a/light_wrapper` mit Typ **Integration** hinzufügen.
+2. **Light Wrapper** öffnen, auf **Herunterladen** klicken und die neueste Version wählen.
 3. Home Assistant neu starten.
 
-Ohne Schaltfläche: **HACS** öffnen → Menü (⋮) → **Benutzerdefinierte Repositories** → `https://github.com/lars-a/light_wrapper` mit Typ **Integration** hinzufügen, dann **Light Wrapper** suchen und herunterladen.
+Bestehende HACS-Installationen werden beim Update auf 2026.11 automatisch in den Marketplace übernommen, einschließlich benutzerdefinierter Repositories wie diesem.
 
 **Integration einrichten**
 
@@ -38,7 +49,7 @@ Die Seite der Integration ist so aufgebaut:
 
 **Updates**
 
-HACS zeigt neue Versionen unter **Einstellungen → Updates** bzw. in HACS selbst an. Nach dem Update Home Assistant neu starten.
+Neue Versionen erscheinen unter **Einstellungen → Updates** bzw. im Marketplace (vor 2026.11: in HACS). Nach dem Update Home Assistant neu starten.
 
 ### Manuell
 
