@@ -279,7 +279,10 @@ async def test_global_flow_creates_entry(hass: HomeAssistant) -> None:
     )
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "global"
-    assert _suggested(result)[CONF_USE_DEFAULT_TRANSITION_ON] is False
+    suggested = _suggested(result)
+    assert suggested[CONF_USE_DEFAULT_TRANSITION_ON] is False
+    assert suggested[CONF_DEFAULT_TRANSITION_ON] == 0.5  # Startwert des Sliders
+    assert suggested[CONF_DEFAULT_TRANSITION_OFF] == 0.5
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
