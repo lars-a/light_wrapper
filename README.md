@@ -31,14 +31,14 @@ Ohne Schaltfläche: **HACS** öffnen → Menü (⋮) → **Benutzerdefinierte Re
 
 5. Auf der Seite der Integration (**Geräte & Dienste → Light Wrapper**) über **Lichtgruppe hinzufügen** Namen, Lichter und (optional) Standardwerte eingeben.
 
-**Updates**
-
-HACS zeigt neue Versionen unter **Einstellungen → Updates** bzw. in HACS selbst an. Nach dem Update Home Assistant neu starten.
-
 Die Seite der Integration ist so aufgebaut:
 
 * **Light Wrapper**: der einzige Eintrag. Über **Konfigurieren** (Zahnrad) stellst du die globalen Einstellungen ein.
 * Darunter die **Lichtgruppen**. Jede hat ein eigenes Gerät und lässt sich dort bearbeiten (Name, Lichter, Standardwerte) oder löschen. Beim Löschen verschwinden auch ihr Gerät und ihre Entitäten.
+
+**Updates**
+
+HACS zeigt neue Versionen unter **Einstellungen → Updates** bzw. in HACS selbst an. Nach dem Update Home Assistant neu starten.
 
 ### Manuell
 
