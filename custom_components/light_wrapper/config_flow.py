@@ -18,6 +18,7 @@ from homeassistant.const import CONF_ENTITIES, CONF_NAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er, selector
 
+from . import apply_when_on_from_options
 from .const import (
     CONF_APPLY_WHEN_ON,
     CONF_DEFAULT_BRIGHTNESS,
@@ -92,14 +93,14 @@ def _form_values(
         values[toggle] = options.get(key) is not None
         values[key] = options[key] if options.get(key) is not None else fallback
     values[CONF_DEFAULT_COLOR_TEMP] = clamp(values[CONF_DEFAULT_COLOR_TEMP], color_temp_bounds)
-    values[CONF_APPLY_WHEN_ON] = bool(options.get(CONF_APPLY_WHEN_ON, False))
+    values[CONF_APPLY_WHEN_ON] = apply_when_on_from_options(options)
     return values
 
 
 def _clean(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str, Any]:
     """Formularwerte in Optionen umwandeln; abgeschaltete Standardwerte entfallen.
 
-    Der Schalter „auch wenn an“ wird nur gespeichert, wenn er aktiv ist.
+    Der Schalter „auch wenn an“ wird nur gespeichert, wenn er abgeschaltet ist.
 
     Die Farbtemperatur wird auf den gemeinsamen Bereich der gewählten Lichter
     begrenzt (die Lichtauswahl kann sich im selben Formular geändert haben).
@@ -109,8 +110,8 @@ def _clean(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str, Any]:
         if user_input.get(toggle):
             value = user_input.get(key)
             options[key] = int(round(value if value is not None else fallback))
-    if user_input.get(CONF_APPLY_WHEN_ON):
-        options[CONF_APPLY_WHEN_ON] = True
+    if not apply_when_on_from_options(user_input):
+        options[CONF_APPLY_WHEN_ON] = False
     if CONF_DEFAULT_COLOR_TEMP in options:
         options[CONF_DEFAULT_COLOR_TEMP] = clamp(
             options[CONF_DEFAULT_COLOR_TEMP],

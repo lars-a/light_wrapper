@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import LightWrapperConfigEntry
-from .const import CONF_APPLY_WHEN_ON
+from .const import CONF_APPLY_WHEN_ON, DEFAULT_APPLY_WHEN_ON
 from .entity import device_info
 
 
@@ -26,7 +26,8 @@ async def async_setup_entry(
 class ApplyWhenOnSwitch(SwitchEntity):
     """An: ein turn_on ohne Parameter setzt auch bei eingeschalteter Gruppe die Standardwerte.
 
-    Der Wert liegt in entry.options und wird dort nur gespeichert, wenn er aktiv ist.
+    Standardmäßig an. Der Wert liegt in entry.options und steht dort nur,
+    wenn der Schalter aus ist.
     """
 
     _attr_has_entity_name = True
@@ -56,6 +57,6 @@ class ApplyWhenOnSwitch(SwitchEntity):
 
     def _set(self, value: bool) -> None:
         options = {k: v for k, v in self._entry.options.items() if k != CONF_APPLY_WHEN_ON}
-        if value:
-            options[CONF_APPLY_WHEN_ON] = True
+        if value != DEFAULT_APPLY_WHEN_ON:
+            options[CONF_APPLY_WHEN_ON] = value
         self.hass.config_entries.async_update_entry(self._entry, options=options)

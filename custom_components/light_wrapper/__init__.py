@@ -10,7 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ENTITIES, Platform
 from homeassistant.core import HomeAssistant, callback
 
-from .const import CONF_APPLY_WHEN_ON, DEFAULT_KEYS
+from .const import CONF_APPLY_WHEN_ON, DEFAULT_APPLY_WHEN_ON, DEFAULT_KEYS
 
 PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.NUMBER, Platform.SWITCH]
 
@@ -21,7 +21,7 @@ class LightWrapperData:
 
     entities: list[str]
     defaults: dict[str, int]
-    apply_when_on: bool = False
+    apply_when_on: bool = DEFAULT_APPLY_WHEN_ON
     _listeners: list[Callable[[], None]] = field(default_factory=list)
 
     @callback
@@ -55,12 +55,17 @@ def defaults_from_options(options: Mapping[str, Any]) -> dict[str, int]:
     }
 
 
+def apply_when_on_from_options(options: Mapping[str, Any]) -> bool:
+    """Schalter „auch wenn an“; fehlt er in den Optionen, gilt der Standard (an)."""
+    return bool(options.get(CONF_APPLY_WHEN_ON, DEFAULT_APPLY_WHEN_ON))
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry) -> bool:
     """Config Entry einrichten."""
     entry.runtime_data = LightWrapperData(
         entities=list(entry.options.get(CONF_ENTITIES, [])),
         defaults=defaults_from_options(entry.options),
-        apply_when_on=bool(entry.options.get(CONF_APPLY_WHEN_ON, False)),
+        apply_when_on=apply_when_on_from_options(entry.options),
     )
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -81,7 +86,7 @@ async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigE
     new_defaults = defaults_from_options(entry.options)
 
     if new_entities == data.entities and new_defaults.keys() == data.defaults.keys():
-        data.async_set_settings(new_defaults, bool(entry.options.get(CONF_APPLY_WHEN_ON, False)))
+        data.async_set_settings(new_defaults, apply_when_on_from_options(entry.options))
         return
 
     await hass.config_entries.async_reload(entry.entry_id)

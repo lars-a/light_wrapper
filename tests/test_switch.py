@@ -27,12 +27,13 @@ async def _switch(hass: HomeAssistant, service: str, entity_id: str) -> None:
     await hass.async_block_till_done()
 
 
-async def test_switch_defaults_to_off(hass: HomeAssistant) -> None:
+async def test_switch_defaults_to_on(hass: HomeAssistant) -> None:
     set_member(hass, CT_LIGHT, "off")
     entry = await setup_wrapper(hass, [CT_LIGHT], **{CONF_DEFAULT_BRIGHTNESS: 60})
     switch_id = switch_entity_id(hass, entry, CONF_APPLY_WHEN_ON)
     assert switch_id is not None
-    assert hass.states.get(switch_id).state == STATE_OFF
+    assert hass.states.get(switch_id).state == STATE_ON
+    assert entry.runtime_data.apply_when_on is True
 
 
 async def test_switch_updates_options_without_reload(hass: HomeAssistant) -> None:
@@ -41,18 +42,18 @@ async def test_switch_updates_options_without_reload(hass: HomeAssistant) -> Non
     runtime_before = entry.runtime_data
     switch_id = switch_entity_id(hass, entry, CONF_APPLY_WHEN_ON)
 
-    await _switch(hass, SERVICE_TURN_ON, switch_id)
+    await _switch(hass, SERVICE_TURN_OFF, switch_id)
 
-    assert entry.options[CONF_APPLY_WHEN_ON] is True
+    assert entry.options[CONF_APPLY_WHEN_ON] is False
     assert entry.options[CONF_DEFAULT_BRIGHTNESS] == 60
     assert entry.state is ConfigEntryState.LOADED
     assert entry.runtime_data is runtime_before  # kein Reload
-    assert entry.runtime_data.apply_when_on is True
-    assert hass.states.get(switch_id).state == STATE_ON
-
-    await _switch(hass, SERVICE_TURN_OFF, switch_id)
-
-    assert CONF_APPLY_WHEN_ON not in entry.options  # nur gespeichert, wenn aktiv
-    assert entry.runtime_data is runtime_before
     assert entry.runtime_data.apply_when_on is False
     assert hass.states.get(switch_id).state == STATE_OFF
+
+    await _switch(hass, SERVICE_TURN_ON, switch_id)
+
+    assert CONF_APPLY_WHEN_ON not in entry.options  # nur gespeichert, wenn aus
+    assert entry.runtime_data is runtime_before
+    assert entry.runtime_data.apply_when_on is True
+    assert hass.states.get(switch_id).state == STATE_ON

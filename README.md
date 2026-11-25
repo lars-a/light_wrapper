@@ -30,7 +30,7 @@ Pro Wrapper entsteht ein Gerät mit:
 | `light.<name>` | Die Lichtgruppe |
 | `number.<name>_standardhelligkeit` | Standardhelligkeit in % (nur wenn aktiviert) |
 | `number.<name>_standard_farbtemperatur` | Standard-Farbtemperatur in K (nur wenn aktiviert; nicht verfügbar, wenn keines der Lichter Farbtemperatur kann) |
-| `switch.<name>_standardwerte_auch_wenn_an` | Standardwerte auch bei schon eingeschalteter Gruppe anwenden (siehe unten) |
+| `switch.<name>_standardwerte_auch_wenn_an` | Standardwerte auch bei schon eingeschalteter Gruppe anwenden (standardmäßig an, siehe unten) |
 
 Über die Number-Entitäten kannst du die Werte im Dashboard oder per Automation ändern, zum Beispiel tagsüber kühl und hell, abends warm und gedimmt. Aktivieren oder deaktivieren lassen sich die Standardwerte unter **Konfigurieren** über die Schalter „… verwenden“; den Wert selbst stellst du dort per Slider ein.
 
@@ -43,8 +43,8 @@ Der Bereich der Standard-Farbtemperatur ist der **gemeinsame Bereich** aller Lic
 
 ## Verhalten beim Einschalten
 
-* Standardwerte greifen nur, wenn die Gruppe **vorher aus** war. Ein `turn_on` auf ein schon eingeschaltetes Licht ändert nichts an der Helligkeit.
-* Ausnahme: Ist der Schalter **„Standardwerte auch wenn an“** eingeschaltet (im Dialog **Konfigurieren** oder als Switch-Entität), setzt ein `turn_on` **ohne Parameter** die Standardwerte auch bei schon eingeschalteter Gruppe. Nur `transition` darf zusätzlich angegeben sein. Kommt eine Helligkeit oder Farbe mit, gilt das normale Verhalten: Bei eingeschalteter Gruppe wird nur der angegebene Wert geändert. Ein Helligkeits-Slider im Dashboard setzt also nicht nebenbei die Farbtemperatur zurück.
+* Der Schalter **„Standardwerte auch wenn an“** (im Dialog **Konfigurieren** oder als Switch-Entität) ist standardmäßig **an**. Dann setzt ein `turn_on` **ohne Parameter** die Standardwerte auch bei schon eingeschalteter Gruppe. Nur `transition` darf zusätzlich angegeben sein. Kommt eine Helligkeit oder Farbe mit, gilt das normale Verhalten: Bei eingeschalteter Gruppe wird nur der angegebene Wert geändert. Ein Helligkeits-Slider im Dashboard setzt also nicht nebenbei die Farbtemperatur zurück.
+* Ist der Schalter **aus**, greifen Standardwerte nur, wenn die Gruppe **vorher aus** war. Ein `turn_on` auf ein schon eingeschaltetes Licht ändert dann nichts an Helligkeit oder Farbe.
 * Die **Standardhelligkeit** wird verwendet, wenn keine Helligkeit angegeben ist (`brightness`, `brightness_pct`, `brightness_step`, `white`).
 * Die **Standard-Farbtemperatur** wird verwendet, wenn keine Farbe angegeben ist (`color_temp_kelvin`, `hs_color`, `rgb_color`, `xy_color`, `white`, `effect` …). Sie geht nur an Mitglieder, die Farbtemperatur unterstützen, und wird auf deren Bereich begrenzt.
 * Beide Werte werden unabhängig voneinander geprüft: `light.turn_on` mit nur `brightness_pct: 30` setzt trotzdem die Standard-Farbtemperatur.

@@ -170,10 +170,14 @@ async def test_given_hs_color_blocks_color_temp_default(hass: HomeAssistant, mem
     assert tuple(data[ATTR_HS_COLOR]) == (120, 100)
 
 
-async def test_no_defaults_when_already_on(hass: HomeAssistant, member_calls) -> None:
+async def test_no_defaults_when_already_on_with_switch_off(
+    hass: HomeAssistant, member_calls
+) -> None:
     set_member(hass, CT_LIGHT, "on", brightness=20, kelvin=5000)
     await setup_wrapper(
-        hass, [CT_LIGHT], **{CONF_DEFAULT_BRIGHTNESS: 60, CONF_DEFAULT_COLOR_TEMP: 2700}
+        hass,
+        [CT_LIGHT],
+        **{CONF_DEFAULT_BRIGHTNESS: 60, CONF_DEFAULT_COLOR_TEMP: 2700, CONF_APPLY_WHEN_ON: False},
     )
 
     await _turn_on(hass)
@@ -181,13 +185,12 @@ async def test_no_defaults_when_already_on(hass: HomeAssistant, member_calls) ->
     assert calls_by_entity(member_calls)[CT_LIGHT] == (SERVICE_TURN_ON, {})
 
 
-async def test_defaults_when_already_on_with_switch(hass: HomeAssistant, member_calls) -> None:
+async def test_defaults_when_already_on_by_default(hass: HomeAssistant, member_calls) -> None:
     set_member(hass, CT_LIGHT, "on", brightness=20, kelvin=5000)
     set_member(hass, DIM_LIGHT, "on", modes=("brightness",), brightness=20)
+    # Schalter nicht gespeichert -> Standard (an)
     await setup_wrapper(
-        hass,
-        [CT_LIGHT, DIM_LIGHT],
-        **{CONF_DEFAULT_BRIGHTNESS: 60, CONF_DEFAULT_COLOR_TEMP: 2700, CONF_APPLY_WHEN_ON: True},
+        hass, [CT_LIGHT, DIM_LIGHT], **{CONF_DEFAULT_BRIGHTNESS: 60, CONF_DEFAULT_COLOR_TEMP: 2700}
     )
 
     await _turn_on(hass)

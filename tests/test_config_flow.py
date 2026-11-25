@@ -55,8 +55,7 @@ async def test_user_flow_creates_entry(hass: HomeAssistant) -> None:
         CONF_ENTITIES: [CT_LIGHT, DIM_LIGHT],
         CONF_DEFAULT_BRIGHTNESS: 60,
         CONF_DEFAULT_COLOR_TEMP: 2700,
-        CONF_APPLY_WHEN_ON: True,
-    }
+    }  # Schalter an = Standard, wird nicht gespeichert
     assert hass.states.get("light.wohnzimmer") is not None
 
 
@@ -80,7 +79,7 @@ async def test_user_flow_without_defaults(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["options"] == {CONF_ENTITIES: [CT_LIGHT]}
+    assert result["options"] == {CONF_ENTITIES: [CT_LIGHT], CONF_APPLY_WHEN_ON: False}
 
 
 async def test_user_flow_requires_lights(hass: HomeAssistant) -> None:
@@ -116,7 +115,7 @@ async def test_options_flow_changes_members_and_disables_default(hass: HomeAssis
     assert suggested[CONF_DEFAULT_BRIGHTNESS] == 60
     assert suggested[CONF_USE_DEFAULT_COLOR_TEMP] is True
     assert suggested[CONF_DEFAULT_COLOR_TEMP] == 2700
-    assert suggested[CONF_APPLY_WHEN_ON] is False
+    assert suggested[CONF_APPLY_WHEN_ON] is True  # Standard
 
     # Helligkeit abschalten, Stehlampe hinzufügen
     result = await hass.config_entries.options.async_configure(
@@ -204,7 +203,7 @@ async def test_options_flow_color_temp_slider_uses_common_range(hass: HomeAssist
         if key.description and "suggested_value" in key.description
     }
     assert suggested[CONF_DEFAULT_COLOR_TEMP] == 2700
-    assert suggested[CONF_APPLY_WHEN_ON] is False
+    assert suggested[CONF_APPLY_WHEN_ON] is True  # Standard
 
 
 async def test_user_flow_clamps_color_temp_to_selected_lights(hass: HomeAssistant) -> None:
