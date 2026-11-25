@@ -50,20 +50,6 @@ Der Bereich der Standard-Farbtemperatur ist der **gemeinsame Bereich** aller Lic
 * Beide Werte werden unabhängig voneinander geprüft: `light.turn_on` mit nur `brightness_pct: 30` setzt trotzdem die Standard-Farbtemperatur.
 * `transition` und `flash` werden immer durchgereicht.
 
-## Tests
-
-Home Assistant läuft nicht nativ unter Windows, deshalb die Tests unter **WSL2 (Ubuntu)** ausführen:
-
-```bash
-cd /mnt/d/Claude/light_wrapper
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements_test.txt
-pytest
-```
-
-Die Lichter in den Tests sind simulierte Zustände; Aufrufe an die Mitglieder werden abgefangen und geprüft.
-
 ## Zustand der Gruppe
 
 * **An**, sobald mindestens ein Mitglied an ist; **nicht verfügbar**, wenn alle Mitglieder nicht verfügbar sind.

@@ -22,7 +22,9 @@ Sprache: Code-Kommentare, Docstrings, Commit-Messages und README sind auf Deutsc
 
 ## Tests
 
-- Unter Windows läuft Home Assistant nicht nativ. Lokal also nur unter WSL2/Linux (siehe README).
+- Unter Windows läuft Home Assistant nicht nativ. Lokal also nur unter WSL2/Linux:
+  `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements_test.txt && pytest`
+- Die Lichter in den Tests sind simulierte Zustände; Aufrufe an die Mitglieder werden abgefangen (`member_calls` in `tests/conftest.py`).
 - GitHub Actions (`.github/workflows/validate.yml`) führt bei jedem Push HACS-Prüfung, Hassfest und `pytest -v --timeout=60` aus. Das ist der maßgebliche Test.
 - Größere Änderungen zuerst auf einen eigenen Branch pushen und erst bei grünen Tests nach `main` übernehmen.
 
