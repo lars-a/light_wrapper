@@ -18,7 +18,7 @@ from .const import (
     MIN_BRIGHTNESS_PCT,
     MIN_COLOR_TEMP_KELVIN,
 )
-from .entity import device_info
+from .entity import color_temp_range, device_info
 
 
 async def async_setup_entry(
@@ -76,7 +76,11 @@ class DefaultBrightnessNumber(_DefaultValueNumber):
 
 
 class DefaultColorTempNumber(_DefaultValueNumber):
-    """Nur verfügbar, wenn mindestens ein Mitglied Farbtemperatur unterstützt."""
+    """Nur verfügbar, wenn mindestens ein Mitglied Farbtemperatur unterstützt.
+
+    Der Bereich ist der gemeinsame Bereich aller Mitglieder mit Farbtemperatur
+    und wird bei jeder Zustandsänderung eines Mitglieds neu bestimmt.
+    """
 
     _option_key = CONF_DEFAULT_COLOR_TEMP
     _attr_translation_key = "default_color_temp"
@@ -91,16 +95,19 @@ class DefaultColorTempNumber(_DefaultValueNumber):
 
         @callback
         def _member_changed(event: Event[EventStateChangedData]) -> None:
-            self._update_available()
+            self._update_from_members()
             self.async_write_ha_state()
 
         self.async_on_remove(
             async_track_state_change_event(self.hass, self._data.entities, _member_changed)
         )
-        self._update_available()
+        self._update_from_members()
 
     @callback
-    def _update_available(self) -> None:
+    def _update_from_members(self) -> None:
+        low, high = color_temp_range(self.hass, self._data.entities)
+        self._attr_native_min_value = low
+        self._attr_native_max_value = high
         self._attr_available = any(
             ColorMode.COLOR_TEMP in (state.attributes.get(ATTR_SUPPORTED_COLOR_MODES) or [])
             for entity_id in self._data.entities

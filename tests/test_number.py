@@ -71,3 +71,36 @@ async def test_color_temp_number_becomes_available(hass: HomeAssistant) -> None:
     set_member(hass, CT_LIGHT, "off")
     await hass.async_block_till_done()
     assert float(hass.states.get(ct_id).state) == 2700
+
+
+async def test_color_temp_number_range_is_intersection(hass: HomeAssistant) -> None:
+    set_member(hass, CT_LIGHT, "off", min_kelvin=2200, max_kelvin=6500)
+    set_member(hass, "light.spot", "off", min_kelvin=2700, max_kelvin=5000)
+    set_member(hass, DIM_LIGHT, "off", modes=("brightness",))  # zählt nicht mit
+    entry = await setup_wrapper(
+        hass, [CT_LIGHT, "light.spot", DIM_LIGHT], **{CONF_DEFAULT_COLOR_TEMP: 3000}
+    )
+    attrs = hass.states.get(number_entity_id(hass, entry, CONF_DEFAULT_COLOR_TEMP)).attributes
+    assert attrs["min"] == 2700
+    assert attrs["max"] == 5000
+
+
+async def test_color_temp_number_range_follows_members(hass: HomeAssistant) -> None:
+    entry = await setup_wrapper(hass, [CT_LIGHT], **{CONF_DEFAULT_COLOR_TEMP: 3000})
+    ct_id = number_entity_id(hass, entry, CONF_DEFAULT_COLOR_TEMP)
+    # Mitglied noch nicht geladen: fester Bereich
+    assert hass.states.get(ct_id).attributes["min"] == 2000
+    assert hass.states.get(ct_id).attributes["max"] == 6500
+
+    set_member(hass, CT_LIGHT, "off", min_kelvin=2500, max_kelvin=6000)
+    await hass.async_block_till_done()
+    assert hass.states.get(ct_id).attributes["min"] == 2500
+    assert hass.states.get(ct_id).attributes["max"] == 6000
+
+
+async def test_color_temp_number_range_without_overlap_uses_union(hass: HomeAssistant) -> None:
+    set_member(hass, CT_LIGHT, "off", min_kelvin=2000, max_kelvin=3000)
+    set_member(hass, "light.spot", "off", min_kelvin=4000, max_kelvin=6500)
+    entry = await setup_wrapper(hass, [CT_LIGHT, "light.spot"], **{CONF_DEFAULT_COLOR_TEMP: 3000})
+    attrs = hass.states.get(number_entity_id(hass, entry, CONF_DEFAULT_COLOR_TEMP)).attributes
+    assert (attrs["min"], attrs["max"]) == (2000, 6500)
