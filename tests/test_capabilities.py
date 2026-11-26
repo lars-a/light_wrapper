@@ -116,7 +116,7 @@ async def test_turning_on_without_capabilities_keeps_them(hass: HomeAssistant) -
     _off_without_capabilities(hass)
     await hass.async_block_till_done()
 
-    set_member(hass, LIGHT, "on", modes=())
+    set_member(hass, LIGHT, "on", modes=(), color_mode="unknown")
     await hass.async_block_till_done()
 
     state = hass.states.get(WRAPPER_ID)
