@@ -51,6 +51,8 @@ DEFAULT_ON_WHEN_ALL_ON = False
 # like Home Assistant's group helper. Only a setting in the group's edit
 # dialog. Off by default; only an enabled setting (True) is stored.
 CONF_HIDE_MEMBERS = "hide_members"
+# Area for the group's device; only used when the device is created
+CONF_AREA = "area_id"
 
 # Value ranges for the settings
 MIN_BRIGHTNESS_PCT = 1

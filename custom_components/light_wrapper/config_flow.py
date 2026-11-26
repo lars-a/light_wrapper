@@ -29,6 +29,7 @@ from . import (
 )
 from .const import (
     CONF_APPLY_WHEN_ON,
+    CONF_AREA,
     CONF_HIDE_MEMBERS,
     CONF_ON_WHEN_ALL_ON,
     CONF_DEFAULT_BRIGHTNESS,
@@ -201,10 +202,14 @@ def _group_options(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str,
     return options
 
 
-def _with_name(name: str | None, schema: vol.Schema) -> vol.Schema:
-    return vol.Schema(
-        {vol.Required(CONF_NAME, default=name or vol.UNDEFINED): selector.TextSelector()}
-    ).extend(schema.schema)
+def _with_name(name: str | None, schema: vol.Schema, *, area: bool = False) -> vol.Schema:
+    """Put the name (and, when adding a group, the area) in front of the form."""
+    fields: dict[vol.Marker, Any] = {
+        vol.Required(CONF_NAME, default=name or vol.UNDEFINED): selector.TextSelector()
+    }
+    if area:
+        fields[vol.Optional(CONF_AREA)] = selector.AreaSelector()
+    return vol.Schema(fields).extend(schema.schema)
 
 
 class LightWrapperConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -313,6 +318,9 @@ class LightGroupSubentryFlow(ConfigSubentryFlow):
             if not options[CONF_ENTITIES]:
                 errors[CONF_ENTITIES] = "no_entities"
             else:
+                # Only needed to create the device; changed later on the device itself
+                if user_input.get(CONF_AREA):
+                    options[CONF_AREA] = user_input[CONF_AREA]
                 return self.async_create_entry(title=user_input[CONF_NAME], data=options)
 
         # No lights are selected yet: fixed range for the slider
@@ -320,7 +328,7 @@ class LightGroupSubentryFlow(ConfigSubentryFlow):
         return self.async_show_form(
             step_id="user",
             data_schema=self.add_suggested_values_to_schema(
-                _with_name(None, _group_schema([], bounds)),
+                _with_name(None, _group_schema([], bounds), area=True),
                 user_input or _group_form_values({}, bounds),
             ),
             errors=errors,

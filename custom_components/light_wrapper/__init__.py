@@ -19,11 +19,17 @@ from homeassistant.config_entries import (
 )
 from homeassistant.const import CONF_ENTITIES, Platform
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv, entity_registry as er
+from homeassistant.helpers import (
+    area_registry as ar,
+    config_validation as cv,
+    device_registry as dr,
+    entity_registry as er,
+)
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     CONF_APPLY_WHEN_ON,
+    CONF_AREA,
     CONF_ENTRY_TYPE,
     CONF_HIDE_MEMBERS,
     CONF_ON_WHEN_ALL_ON,
@@ -196,6 +202,35 @@ def _async_update_hidden_members(
             registry.async_update_entity(entity_id, hidden_by=None)
 
 
+@callback
+def _async_create_group_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Create the devices of new groups in the area chosen when adding them.
+
+    This runs before the entities are added, so Home Assistant already builds
+    their entity IDs with the area. Existing devices are left alone: their area
+    is managed by the user from then on.
+    """
+    device_registry = dr.async_get(hass)
+    area_registry = ar.async_get(hass)
+    for subentry_id, subentry in group_subentries(entry).items():
+        area_id = subentry.data.get(CONF_AREA)
+        if not area_id or area_registry.async_get_area(area_id) is None:
+            continue
+        identifiers = {(DOMAIN, subentry_id)}
+        if device_registry.async_get_device(identifiers=identifiers) is not None:
+            continue
+        device = device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            config_subentry_id=subentry_id,
+            identifiers=identifiers,
+            name=subentry.title,
+            entry_type=dr.DeviceEntryType.SERVICE,
+            manufacturer="Light Wrapper",
+            model="Light group",
+        )
+        device_registry.async_update_device(device.id, area_id=area_id)
+
+
 def _structure(entry: ConfigEntry) -> Hashable:
     """Everything that requires a reload when it changes.
 
@@ -253,6 +288,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry)
     )
     if not is_global(entry):
         _async_update_hidden_members(hass, _members(entry, hidden_only=True), set())
+        _async_create_group_devices(hass, entry)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, _platforms(entry))
     return True

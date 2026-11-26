@@ -40,6 +40,7 @@
           "description": "Combines several lights into one light entity. Optional defaults are used when the light is turned on without brightness or color.",
           "data": {
             "name": "Name",
+            "area_id": "Area",
             "entities": "Lights",
             "use_default_brightness": "Use default brightness",
             "default_brightness_pct": "Default brightness",
@@ -54,6 +55,7 @@
             "hide_members": "Hide members"
           },
           "data_description": {
+            "area_id": "Area of the new device. The entity IDs are then built with the area. Change the area on the device later.",
             "default_brightness_pct": "Used when the light is turned on without a brightness.",
             "default_color_temp_kelvin": "Used when the light is turned on without a color; only sent to lights that support color temperature.",
             "use_default_transition_on": "Off: the global transition applies, if one is set.",

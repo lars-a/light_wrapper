@@ -38,7 +38,8 @@ Bestehende HACS-Installationen werden beim Update auf 2026.11 automatisch in den
 
 [![Integration öffnen](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=light_wrapper)
 
-5. Auf der Seite der Integration (**Geräte & Dienste → Light Wrapper**) am Eintrag **Lichtgruppen** über **Lichtgruppe hinzufügen** Namen, Lichter und (optional) Standardwerte eingeben.
+5. Auf der Seite der Integration (**Geräte & Dienste → Light Wrapper**) am Eintrag **Lichtgruppen** über **Lichtgruppe hinzufügen** Namen, Lichter und (optional) Bereich und Standardwerte eingeben.
+   Der Bereich wird dem Gerät der Gruppe beim Anlegen zugewiesen. So entstehen die Entity-IDs gleich mit dem Bereich (z. B. `light.kuche_deckenlicht`). Später änderst du den Bereich direkt am Gerät.
 
 Die Seite der Integration ist so aufgebaut:
 

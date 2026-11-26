@@ -38,7 +38,8 @@ Existing HACS installations are moved to the Marketplace automatically when upda
 
 [![Open the integration](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=light_wrapper)
 
-5. On the integration page (**Devices & services → Light Wrapper**), use **Add light group** on the **Light groups** entry and enter a name, the lights and (optionally) defaults.
+5. On the integration page (**Devices & services → Light Wrapper**), use **Add light group** on the **Light groups** entry and enter a name, the lights and (optionally) an area and defaults.
+   The area is assigned to the group's device when it is created, so the entity IDs are built with the area right away (e.g. `light.kitchen_ceiling`). Later you change the area on the device itself.
 
 The integration page is organized like this:
 
