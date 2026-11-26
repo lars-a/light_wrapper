@@ -62,6 +62,7 @@ from .const import (
     MIN_TRANSITION,
     SERVICE_SET_DEFAULTS,
 )
+from .capabilities import member_capabilities
 from .entity import clamp, color_temp_range, device_info
 
 # Parameters that set a brightness -> default brightness is not applied
@@ -148,6 +149,10 @@ async def async_setup_entry(
 
 def _values(states: Iterable[State], key: str) -> list[Any]:
     return [value for state in states if (value := state.attributes.get(key)) is not None]
+
+
+def _caps(capabilities: Iterable[dict[str, Any]], key: str) -> list[Any]:
+    return [value for caps in capabilities if (value := caps.get(key)) is not None]
 
 
 def _mean_int(values: list[Any]) -> int | None:
@@ -258,14 +263,17 @@ class LightWrapperLight(LightEntity):
         self._attr_rgbw_color = _mean_tuple(_values(on_states, ATTR_RGBW_COLOR), as_int=True)
         self._attr_rgbww_color = _mean_tuple(_values(on_states, ATTR_RGBWW_COLOR), as_int=True)
 
+        # Capabilities, also of members that only report them while on
+        capabilities = [member_capabilities(self.hass, s.entity_id) for s in states]
+
         # Color temperature range across all members
-        if mins := _values(states, ATTR_MIN_COLOR_TEMP_KELVIN):
+        if mins := _caps(capabilities, ATTR_MIN_COLOR_TEMP_KELVIN):
             self._attr_min_color_temp_kelvin = min(mins)
-        if maxs := _values(states, ATTR_MAX_COLOR_TEMP_KELVIN):
+        if maxs := _caps(capabilities, ATTR_MAX_COLOR_TEMP_KELVIN):
             self._attr_max_color_temp_kelvin = max(maxs)
 
         # Effects
-        effect_lists = _values(states, ATTR_EFFECT_LIST)
+        effect_lists = _caps(capabilities, ATTR_EFFECT_LIST)
         self._attr_effect_list = (
             list(dict.fromkeys(itertools.chain.from_iterable(effect_lists))) or None
         )
@@ -274,8 +282,8 @@ class LightWrapperLight(LightEntity):
 
         # Color modes
         modes: set[ColorMode] = set()
-        for state in states:
-            for raw in state.attributes.get(ATTR_SUPPORTED_COLOR_MODES) or []:
+        for caps in capabilities:
+            for raw in caps.get(ATTR_SUPPORTED_COLOR_MODES, []):
                 if (mode := _to_color_mode(raw)) is not None:
                     modes.add(mode)
         supported = _filter_color_modes(modes) or {ColorMode.ONOFF}
@@ -286,8 +294,8 @@ class LightWrapperLight(LightEntity):
 
         # Features (effect, flash, transition)
         features = 0
-        for state in states:
-            features |= int(state.attributes.get(ATTR_SUPPORTED_FEATURES, 0))
+        for caps in capabilities:
+            features |= caps.get(ATTR_SUPPORTED_FEATURES, 0)
         self._attr_supported_features = LightEntityFeature(features) & SUPPORTED_FEATURES_MASK
 
     @staticmethod
@@ -394,9 +402,7 @@ class LightWrapperLight(LightEntity):
         return data
 
     def _member_supports_transition(self, entity_id: str) -> bool:
-        if (state := self.hass.states.get(entity_id)) is None:
-            return False
-        features = int(state.attributes.get(ATTR_SUPPORTED_FEATURES, 0))
+        features = member_capabilities(self.hass, entity_id).get(ATTR_SUPPORTED_FEATURES, 0)
         return bool(features & LightEntityFeature.TRANSITION)
 
     async def _async_call_members(
@@ -418,13 +424,11 @@ class LightWrapperLight(LightEntity):
 
     def _member_color_temp(self, entity_id: str, kelvin: int) -> int | None:
         """Color temperature only for members that support it, limited to their range."""
-        state = self.hass.states.get(entity_id)
-        if state is None:
+        caps = member_capabilities(self.hass, entity_id)
+        if ColorMode.COLOR_TEMP not in caps.get(ATTR_SUPPORTED_COLOR_MODES, []):
             return None
-        if ColorMode.COLOR_TEMP not in (state.attributes.get(ATTR_SUPPORTED_COLOR_MODES) or []):
-            return None
-        low = state.attributes.get(ATTR_MIN_COLOR_TEMP_KELVIN)
-        high = state.attributes.get(ATTR_MAX_COLOR_TEMP_KELVIN)
+        low = caps.get(ATTR_MIN_COLOR_TEMP_KELVIN)
+        high = caps.get(ATTR_MAX_COLOR_TEMP_KELVIN)
         if low is not None:
             kelvin = max(kelvin, int(low))
         if high is not None:

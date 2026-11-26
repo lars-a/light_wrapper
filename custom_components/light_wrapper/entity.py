@@ -18,6 +18,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity import Entity
 
 from . import LightWrapperConfigEntry, LightWrapperData
+from .capabilities import member_capabilities
 from .const import DOMAIN, MAX_COLOR_TEMP_KELVIN, MIN_COLOR_TEMP_KELVIN
 
 
@@ -91,19 +92,19 @@ def color_temp_range(hass: HomeAssistant, entity_ids: Iterable[str]) -> tuple[in
     """Color temperature range shared by all members with color temperature.
 
     Only members that support color temperature and report their range are
-    considered. If none is known (e.g. because the lights are not loaded yet),
+    considered (for lights that only report it while on, the remembered
+    range). If none is known (e.g. because the lights are not loaded yet),
     the fixed range applies. If the ranges do not overlap, the combined range
     is used instead, so the slider stays usable.
     """
     lows: list[int] = []
     highs: list[int] = []
     for entity_id in entity_ids:
-        if (state := hass.states.get(entity_id)) is None:
+        caps = member_capabilities(hass, entity_id)
+        if ColorMode.COLOR_TEMP not in caps.get(ATTR_SUPPORTED_COLOR_MODES, []):
             continue
-        if ColorMode.COLOR_TEMP not in (state.attributes.get(ATTR_SUPPORTED_COLOR_MODES) or []):
-            continue
-        low = state.attributes.get(ATTR_MIN_COLOR_TEMP_KELVIN)
-        high = state.attributes.get(ATTR_MAX_COLOR_TEMP_KELVIN)
+        low = caps.get(ATTR_MIN_COLOR_TEMP_KELVIN)
+        high = caps.get(ATTR_MAX_COLOR_TEMP_KELVIN)
         if low is None or high is None:
             continue
         lows.append(int(low))

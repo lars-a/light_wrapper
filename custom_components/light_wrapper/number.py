@@ -24,6 +24,7 @@ from .const import (
     TRANSITION_KEYS,
     TRANSITION_STEP,
 )
+from .capabilities import member_capabilities
 from .entity import LightWrapperSettingEntity, color_temp_range
 
 
@@ -112,9 +113,9 @@ class DefaultColorTempNumber(_DefaultValueNumber):
         self._attr_native_min_value = low
         self._attr_native_max_value = high
         self._attr_available = any(
-            ColorMode.COLOR_TEMP in (state.attributes.get(ATTR_SUPPORTED_COLOR_MODES) or [])
+            ColorMode.COLOR_TEMP
+            in member_capabilities(self.hass, entity_id).get(ATTR_SUPPORTED_COLOR_MODES, [])
             for entity_id in self._data.entities
-            if (state := self.hass.states.get(entity_id)) is not None
         )
 
 

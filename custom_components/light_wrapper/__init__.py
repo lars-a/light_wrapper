@@ -27,6 +27,7 @@ from homeassistant.helpers import (
 )
 from homeassistant.helpers.typing import ConfigType
 
+from .capabilities import async_setup_capabilities
 from .const import (
     CONF_APPLY_WHEN_ON,
     CONF_AREA,
@@ -263,7 +264,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     Up to 0.7.1 the global entry was created with SOURCE_SYSTEM, for which the UI
     offers no "Delete". The source cannot be changed afterwards, so the entry is
     replaced by a new one (same title and options) created with SOURCE_IMPORT.
+    Also loads the remembered capabilities of the member lights.
     """
+    await async_setup_capabilities(hass)
     for entry in hass.config_entries.async_entries(DOMAIN):
         if not (is_global(entry) and entry.source == SOURCE_SYSTEM):
             continue
