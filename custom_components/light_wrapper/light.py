@@ -53,6 +53,7 @@ from .const import (
     CONF_DEFAULT_COLOR_TEMP,
     CONF_DEFAULT_TRANSITION_OFF,
     CONF_DEFAULT_TRANSITION_ON,
+    CONF_RESEND_COLOR_TEMP,
     DEFAULT_KEYS,
     MAX_BRIGHTNESS_PCT,
     MAX_COLOR_TEMP_KELVIN,
@@ -60,6 +61,7 @@ from .const import (
     MIN_BRIGHTNESS_PCT,
     MIN_COLOR_TEMP_KELVIN,
     MIN_TRANSITION,
+    RESEND_COLOR_TEMP_DELAY,
     SERVICE_SET_DEFAULTS,
 )
 from .capabilities import member_capabilities
@@ -342,6 +344,13 @@ class LightWrapperLight(LightEntity):
             else None
         )
         transition = self._default_transition(CONF_DEFAULT_TRANSITION_ON, kwargs)
+        # Members this call actually switches on (for the resend workaround)
+        were_off = {
+            entity_id
+            for entity_id in self._entity_ids
+            if (state := self.hass.states.get(entity_id)) is None or state.state != STATE_ON
+        }
+        sent: dict[str, dict[str, Any]] = {}
 
         def payload(entity_id: str) -> dict[str, Any]:
             data = self._with_transition(entity_id, kwargs, transition)
@@ -351,9 +360,39 @@ class LightWrapperLight(LightEntity):
                 kelvin := self._member_color_temp(entity_id, color_temp)
             ) is not None:
                 data[ATTR_COLOR_TEMP_KELVIN] = kelvin
+            sent[entity_id] = data
             return data
 
         await self._async_call_members(SERVICE_TURN_ON, payload)
+        await self._async_resend_color_temp(
+            {
+                entity_id: sent[entity_id][ATTR_COLOR_TEMP_KELVIN]
+                for entity_id in were_off
+                if ATTR_COLOR_TEMP_KELVIN in sent.get(entity_id, {})
+            }
+        )
+
+    async def _async_resend_color_temp(self, kelvins: dict[str, int]) -> None:
+        """Workaround for lights that ignore the color temperature when switched on.
+
+        If enabled for the group, the members that were just switched on get
+        their color temperature again in a second turn_on shortly afterwards.
+        """
+        subentry = self._entry.subentries.get(self._subentry_id)
+        if not kelvins or subentry is None or not subentry.data.get(CONF_RESEND_COLOR_TEMP):
+            return
+        await asyncio.sleep(RESEND_COLOR_TEMP_DELAY)
+        by_kelvin: dict[int, list[str]] = {}
+        for entity_id, kelvin in kelvins.items():
+            by_kelvin.setdefault(kelvin, []).append(entity_id)
+        await asyncio.gather(
+            *(
+                self._async_call(
+                    SERVICE_TURN_ON, sorted(entity_ids), {ATTR_COLOR_TEMP_KELVIN: kelvin}
+                )
+                for kelvin, entity_ids in by_kelvin.items()
+            )
+        )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off; without transition/flash, use the default transition."""

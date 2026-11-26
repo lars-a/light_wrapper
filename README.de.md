@@ -122,6 +122,7 @@ Eine Übergangszeit von 0 s wird ausdrücklich als `transition: 0` gesendet. Das
 * `transition` und `flash` werden immer durchgereicht.
 * Die **Standard-Übergangszeit** wird bei jedem `turn_on` bzw. `turn_off` ohne `transition` und ohne `flash` verwendet, auch wenn die Gruppe schon an ist (z. B. beim Ändern der Helligkeit). Sie geht nur an Mitglieder, die Übergänge unterstützen.
 * Manche Lichter melden ihre Fähigkeiten (Farbtemperatur und deren Bereich, Übergänge, Effekte) nur, solange sie an sind, oft auch nicht gleich nach dem Einschalten. Light Wrapper merkt sich, was jedes Mitglied im eingeschalteten Zustand meldet, auch über Neustarts hinweg, und kombiniert es immer mit dem, was das Licht gerade meldet. Wird ein Licht aus allen Gruppen entfernt, wird das Gemerkte verworfen. Ein solches Licht bekommt die Standard-Farbtemperatur und Übergangszeit, sobald es einmal bei geladenem Light Wrapper an war.
+* **„Farbtemperatur nach dem Einschalten erneut senden“** (im Bearbeiten-Dialog der Gruppe, standardmäßig aus) ist ein Workaround für Lichter, die die Farbtemperatur im Befehl ignorieren, mit dem sie tatsächlich eingeschaltet werden. Mitglieder, die aus waren und eine Farbtemperatur bekommen haben, erhalten 0,5 s später ein zweites `turn_on` nur mit dieser Farbtemperatur. Mitglieder, die schon an waren, sind nicht betroffen.
 
 ## Zustand der Gruppe
 
