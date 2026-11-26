@@ -4,6 +4,9 @@ from __future__ import annotations
 
 DOMAIN = "light_wrapper"
 
+# Action to change a group's defaults, targeting its light entity
+SERVICE_SET_DEFAULTS = "set_defaults"
+
 # There are exactly two config entries, both created automatically:
 # - "Global settings": its options are the global settings (default transitions)
 # - "Light groups": each light group is a subentry of it

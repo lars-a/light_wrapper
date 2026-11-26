@@ -128,5 +128,29 @@
         "name": "Standardwerte auch wenn an"
       }
     }
+  },
+  "services": {
+    "set_defaults": {
+      "name": "Standardwerte setzen",
+      "description": "Ändert die Standardwerte einer oder mehrerer Lichtgruppen. Ein Wert schaltet den Standardwert bei Bedarf ein; in YAML schaltet null ihn ab.",
+      "fields": {
+        "default_brightness_pct": {
+          "name": "Standardhelligkeit",
+          "description": "Standardhelligkeit in %."
+        },
+        "default_color_temp_kelvin": {
+          "name": "Standard-Farbtemperatur",
+          "description": "Standard-Farbtemperatur in K; wird auf den gemeinsamen Bereich der Lichter der Gruppe begrenzt."
+        },
+        "default_transition_on": {
+          "name": "Übergangszeit beim Einschalten",
+          "description": "Eigene Übergangszeit der Gruppe beim Einschalten in s."
+        },
+        "default_transition_off": {
+          "name": "Übergangszeit beim Ausschalten",
+          "description": "Eigene Übergangszeit der Gruppe beim Ausschalten in s."
+        }
+      }
+    }
   }
 }

@@ -81,6 +81,28 @@ The range of the default color temperature is the **common range** of all lights
 * If the ranges do not overlap at all, the combined range applies.
 * If an entered value is outside the range of the selected lights, it is set to the nearest valid value when saving.
 
+## Action `light_wrapper.set_defaults`
+
+Changes the defaults of one or more light groups directly on their light entities, for example in an automation:
+
+```yaml
+action: light_wrapper.set_defaults
+target:
+  entity_id:
+    - light.living_room
+    - light.hallway
+data:
+  default_brightness_pct: 40
+  default_color_temp_kelvin: 2700
+  default_transition_on: 1.5
+  default_transition_off: 3
+```
+
+* The parameters have the same names as the attributes of the light entity. All are optional, but at least one is required.
+* A value sets the default and enables it if needed (the group's number entity is then created). `null` disables the default.
+* The color temperature is limited to the common range of the group's lights; transitions are rounded to 0.1 s.
+* Only the group's own transitions are changed, not the global ones.
+
 ## Global settings
 
 Open the global settings with **Configure** on the **Global settings** entry. They define default transitions for **all** light groups, separately for turning on and off (0–10 s each, in 0.1 s steps). Each enabled transition gets a number entity on the **Light Wrapper global settings** device (`number.light_wrapper_global_settings_transition_on` or `…_transition_off`).

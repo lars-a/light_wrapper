@@ -81,6 +81,28 @@ Der Bereich der Standard-Farbtemperatur ist der **gemeinsame Bereich** aller Lic
 * Überschneiden sich die Bereiche gar nicht, gilt der Gesamtbereich.
 * Liegt ein eingegebener Wert außerhalb des Bereichs der gewählten Lichter, wird er beim Speichern auf den nächsten passenden Wert gesetzt.
 
+## Aktion `light_wrapper.set_defaults`
+
+Ändert die Standardwerte einer oder mehrerer Lichtgruppen direkt an ihren Lichtentitäten, zum Beispiel in einer Automation:
+
+```yaml
+action: light_wrapper.set_defaults
+target:
+  entity_id:
+    - light.wohnzimmer
+    - light.flur
+data:
+  default_brightness_pct: 40
+  default_color_temp_kelvin: 2700
+  default_transition_on: 1.5
+  default_transition_off: 3
+```
+
+* Die Parameter heißen wie die Attribute der Lichtentität. Alle sind optional, aber mindestens einer muss angegeben sein.
+* Ein Wert setzt den Standardwert und schaltet ihn bei Bedarf ein (die Number-Entität der Gruppe entsteht dann). `null` schaltet den Standardwert ab.
+* Die Farbtemperatur wird auf den gemeinsamen Bereich der Lichter der Gruppe begrenzt; Übergangszeiten werden auf 0,1 s gerundet.
+* Geändert werden nur die eigenen Übergangszeiten der Gruppe, nicht die globalen.
+
 ## Globale Einstellungen
 
 Die globalen Einstellungen öffnest du über **Konfigurieren** am Eintrag **Globale Einstellungen**. Sie legen Standard-Übergangszeiten für **alle** Lichtgruppen fest, getrennt für Ein- und Ausschalten (je 0–10 s in 0,1-s-Schritten). Für jede aktivierte Übergangszeit gibt es eine Number-Entität am Gerät **Light Wrapper Globale Einstellungen** (`number.light_wrapper_globale_einstellungen_ubergangszeit_einschalten` bzw. `…_ausschalten`).

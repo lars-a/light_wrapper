@@ -128,5 +128,29 @@
         "name": "Apply defaults when on"
       }
     }
+  },
+  "services": {
+    "set_defaults": {
+      "name": "Set defaults",
+      "description": "Changes the defaults of one or more light groups. A value enables the default if needed; in YAML, null disables it.",
+      "fields": {
+        "default_brightness_pct": {
+          "name": "Default brightness",
+          "description": "Default brightness in %."
+        },
+        "default_color_temp_kelvin": {
+          "name": "Default color temperature",
+          "description": "Default color temperature in K; limited to the common range of the group's lights."
+        },
+        "default_transition_on": {
+          "name": "Transition when turning on",
+          "description": "The group's own transition when turning on, in s."
+        },
+        "default_transition_off": {
+          "name": "Transition when turning off",
+          "description": "The group's own transition when turning off, in s."
+        }
+      }
+    }
   }
 }

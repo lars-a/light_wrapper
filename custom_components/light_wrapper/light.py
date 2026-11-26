@@ -8,6 +8,8 @@ from collections.abc import Callable, Iterable
 import itertools
 from typing import Any
 
+import voluptuous as vol
+
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_BRIGHTNESS_PCT,
@@ -41,17 +43,26 @@ from homeassistant.const import (
     STATE_UNKNOWN,
 )
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, State, callback
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
-from . import LightWrapperConfigEntry, global_defaults
+from . import LightWrapperConfigEntry, global_defaults, normalize_default
 from .const import (
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
     CONF_DEFAULT_TRANSITION_OFF,
     CONF_DEFAULT_TRANSITION_ON,
+    DEFAULT_KEYS,
+    MAX_BRIGHTNESS_PCT,
+    MAX_COLOR_TEMP_KELVIN,
+    MAX_TRANSITION,
+    MIN_BRIGHTNESS_PCT,
+    MIN_COLOR_TEMP_KELVIN,
+    MIN_TRANSITION,
+    SERVICE_SET_DEFAULTS,
 )
-from .entity import device_info
+from .entity import clamp, color_temp_range, device_info
 
 # Parameters that set a brightness -> default brightness is not applied
 BRIGHTNESS_PARAMS = {ATTR_BRIGHTNESS, ATTR_WHITE}
@@ -71,6 +82,32 @@ COLOR_PARAMS = {
 PASSIVE_PARAMS = {ATTR_TRANSITION}
 # Parameters for which no default transition is added
 TRANSITION_PARAMS = {ATTR_TRANSITION, ATTR_FLASH}
+
+def _optional(validator: vol.All) -> vol.Any:
+    """A value, or None to disable the default."""
+    return vol.Any(None, validator)
+
+
+# Action light_wrapper.set_defaults: same keys as the attributes of the light
+SET_DEFAULTS_SCHEMA = vol.All(
+    cv.make_entity_service_schema(
+        {
+            vol.Optional(CONF_DEFAULT_BRIGHTNESS): _optional(
+                vol.All(vol.Coerce(int), vol.Range(MIN_BRIGHTNESS_PCT, MAX_BRIGHTNESS_PCT))
+            ),
+            vol.Optional(CONF_DEFAULT_COLOR_TEMP): _optional(
+                vol.All(vol.Coerce(int), vol.Range(MIN_COLOR_TEMP_KELVIN, MAX_COLOR_TEMP_KELVIN))
+            ),
+            vol.Optional(CONF_DEFAULT_TRANSITION_ON): _optional(
+                vol.All(vol.Coerce(float), vol.Range(MIN_TRANSITION, MAX_TRANSITION))
+            ),
+            vol.Optional(CONF_DEFAULT_TRANSITION_OFF): _optional(
+                vol.All(vol.Coerce(float), vol.Range(MIN_TRANSITION, MAX_TRANSITION))
+            ),
+        }
+    ),
+    cv.has_at_least_one_key(*DEFAULT_KEYS),
+)
 
 SUPPORTED_FEATURES_MASK = (
     LightEntityFeature.EFFECT | LightEntityFeature.FLASH | LightEntityFeature.TRANSITION
@@ -95,7 +132,10 @@ async def async_setup_entry(
     entry: LightWrapperConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Create one light entity per light group."""
+    """Create one light entity per light group and register the set_defaults action."""
+    entity_platform.async_get_current_platform().async_register_entity_service(
+        SERVICE_SET_DEFAULTS, SET_DEFAULTS_SCHEMA, "async_set_defaults"
+    )
     for subentry_id in entry.runtime_data.groups:
         async_add_entities(
             [LightWrapperLight(entry, subentry_id)], config_subentry_id=subentry_id
@@ -154,6 +194,8 @@ class LightWrapperLight(LightEntity):
     _attr_icon = "mdi:lightbulb-group"
 
     def __init__(self, entry: LightWrapperConfigEntry, subentry_id: str) -> None:
+        self._entry = entry
+        self._subentry_id = subentry_id
         self._data = entry.runtime_data.groups[subentry_id]
         self._entity_ids: list[str] = list(self._data.entities)
         self._attr_unique_id = subentry_id
@@ -311,6 +353,24 @@ class LightWrapperLight(LightEntity):
             SERVICE_TURN_OFF,
             lambda entity_id: self._with_transition(entity_id, kwargs, transition),
         )
+
+    async def async_set_defaults(self, **values: Any) -> None:
+        """Change the group's defaults (action light_wrapper.set_defaults).
+
+        A value sets the default and enables it if needed; None disables it.
+        The color temperature is limited to the common range of the members.
+        """
+        subentry = self._entry.subentries[self._subentry_id]
+        data = dict(subentry.data)
+        for key, value in values.items():
+            if value is None:
+                data.pop(key, None)
+                continue
+            value = normalize_default(key, value)
+            if key == CONF_DEFAULT_COLOR_TEMP:
+                value = clamp(value, color_temp_range(self.hass, self._entity_ids))
+            data[key] = value
+        self.hass.config_entries.async_update_subentry(self._entry, subentry, data=data)
 
     def _default_transition(self, key: str, kwargs: dict[str, Any]) -> float | None:
         """The group's own default transition, otherwise the global one.
