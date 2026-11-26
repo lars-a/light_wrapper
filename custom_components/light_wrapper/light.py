@@ -44,7 +44,7 @@ from homeassistant.core import Event, EventStateChangedData, HomeAssistant, Stat
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
-from . import LightWrapperConfigEntry
+from . import LightWrapperConfigEntry, global_defaults
 from .const import (
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
@@ -155,7 +155,6 @@ class LightWrapperLight(LightEntity):
 
     def __init__(self, entry: LightWrapperConfigEntry, subentry_id: str) -> None:
         self._data = entry.runtime_data.groups[subentry_id]
-        self._global = entry.runtime_data.global_settings
         self._entity_ids: list[str] = list(self._data.entities)
         self._attr_unique_id = subentry_id
         self._attr_device_info = device_info(entry, entry.subentries[subentry_id])
@@ -309,7 +308,7 @@ class LightWrapperLight(LightEntity):
             return None
         if key in self._data.defaults:
             return self._data.defaults[key]
-        return self._global.defaults.get(key)
+        return global_defaults(self.hass).get(key)
 
     def _with_transition(
         self, entity_id: str, kwargs: dict[str, Any], transition: float | None

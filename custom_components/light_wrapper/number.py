@@ -9,7 +9,7 @@ from homeassistant.core import Event, EventStateChangedData, HomeAssistant, call
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
-from . import LightWrapperConfigEntry, normalize_default
+from . import LightWrapperConfigEntry, is_global, normalize_default
 from .const import (
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
@@ -34,14 +34,16 @@ async def async_setup_entry(
 ) -> None:
     """Create a number entity only for enabled defaults.
 
-    Globally there are only the transitions; groups have all defaults.
+    The global entry only has the transitions; groups have all defaults.
     """
     runtime = entry.runtime_data
-    async_add_entities(
-        _NUMBER_CLASSES[key](entry, None)
-        for key in TRANSITION_KEYS
-        if key in runtime.global_settings.defaults
-    )
+    if is_global(entry):
+        async_add_entities(
+            _NUMBER_CLASSES[key](entry, None)
+            for key in TRANSITION_KEYS
+            if key in runtime.global_settings.defaults
+        )
+        return
     for subentry_id, data in runtime.groups.items():
         async_add_entities(
             (

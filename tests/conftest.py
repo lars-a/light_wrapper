@@ -15,7 +15,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.light_wrapper import LightWrapperData, group_subentries
-from custom_components.light_wrapper.const import DOMAIN, ENTRY_TITLE, SUBENTRY_TYPE_GROUP
+from custom_components.light_wrapper.const import (
+    CONF_ENTRY_TYPE,
+    DOMAIN,
+    ENTRY_TYPE_GLOBAL,
+    ENTRY_TYPE_GROUPS,
+    SUBENTRY_TYPE_GROUP,
+)
 from custom_components.light_wrapper.light import LightWrapperLight
 
 WRAPPER_ID = "light.wohnzimmer"
@@ -60,16 +66,25 @@ async def setup_integration(
     hass: HomeAssistant,
     groups: dict[str, dict[str, Any]] | None = None,
     global_options: dict[str, Any] | None = None,
-) -> MockConfigEntry:
-    """Load the "Light Wrapper" entry with global settings and light groups.
+) -> tuple[MockConfigEntry, MockConfigEntry]:
+    """Load the "Global settings" and "Light groups" entries.
 
     groups: {name: group data}
+    Returns (global entry, groups entry).
     """
-    entry = MockConfigEntry(
+    global_entry = MockConfigEntry(
         domain=DOMAIN,
-        title=ENTRY_TITLE,
-        data={},
+        title="Global settings",
+        unique_id=ENTRY_TYPE_GLOBAL,
+        data={CONF_ENTRY_TYPE: ENTRY_TYPE_GLOBAL},
         options=global_options or {},
+    )
+    groups_entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Light groups",
+        unique_id=ENTRY_TYPE_GROUPS,
+        data={CONF_ENTRY_TYPE: ENTRY_TYPE_GROUPS},
+        options={},
         subentries_data=[
             ConfigSubentryData(
                 data=data, subentry_type=SUBENTRY_TYPE_GROUP, title=title, unique_id=None
@@ -77,10 +92,11 @@ async def setup_integration(
             for title, data in (groups or {}).items()
         ],
     )
-    entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
+    for entry in (global_entry, groups_entry):
+        entry.add_to_hass(hass)
+        assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
-    return entry
+    return global_entry, groups_entry
 
 
 async def setup_wrapper(
@@ -90,17 +106,30 @@ async def setup_wrapper(
     global_options: dict[str, Any] | None = None,
     **defaults: float | bool,
 ) -> MockConfigEntry:
-    """Create and load a light group 'Wohnzimmer'."""
-    return await setup_integration(
+    """Create and load a light group 'Wohnzimmer'; returns the groups entry."""
+    _global_entry, groups_entry = await setup_integration(
         hass,
         groups={"Wohnzimmer": {CONF_ENTITIES: entities, **defaults}},
         global_options=global_options,
     )
+    return groups_entry
 
 
 async def setup_global(hass: HomeAssistant, **options: float) -> MockConfigEntry:
-    """Load only the entry with global settings (no groups)."""
-    return await setup_integration(hass, global_options=options)
+    """Load both entries without groups; returns the global entry."""
+    global_entry, _groups_entry = await setup_integration(hass, global_options=options)
+    return global_entry
+
+
+async def setup_groups(hass: HomeAssistant) -> MockConfigEntry:
+    """Load both entries without groups; returns the groups entry."""
+    _global_entry, groups_entry = await setup_integration(hass)
+    return groups_entry
+
+
+def global_entry(hass: HomeAssistant) -> MockConfigEntry:
+    """The "Global settings" entry."""
+    return hass.config_entries.async_entry_for_domain_unique_id(DOMAIN, ENTRY_TYPE_GLOBAL)
 
 
 def group_id(entry: MockConfigEntry) -> str:

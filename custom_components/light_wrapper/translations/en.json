@@ -3,11 +3,11 @@
     "step": {
       "user": {
         "title": "Set up Light Wrapper",
-        "description": "Creates the “Light Wrapper” entry with the global settings. Afterwards, add light groups via “Add light group”."
+        "description": "Creates the “Global settings” and “Light groups” entries. Afterwards, add light groups on the “Light groups” entry via “Add light group”."
       }
     },
     "abort": {
-      "single_instance_allowed": "Light Wrapper is already set up. Add light groups via “Add light group”."
+      "already_configured": "Light Wrapper is already set up. Add light groups on the “Light groups” entry via “Add light group”."
     }
   },
   "options": {

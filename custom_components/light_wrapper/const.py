@@ -4,10 +4,22 @@ from __future__ import annotations
 
 DOMAIN = "light_wrapper"
 
-# There is exactly one config entry ("Light Wrapper"). Its options are the
-# global settings; each light group is a subentry.
+# There are exactly two config entries, both created automatically:
+# - "Global settings": its options are the global settings (default transitions)
+# - "Light groups": each light group is a subentry of it
+# The type is stored in entry.data and also used as the entry's unique_id.
+CONF_ENTRY_TYPE = "entry_type"
+ENTRY_TYPE_GLOBAL = "global"
+ENTRY_TYPE_GROUPS = "groups"
+ENTRY_TYPES = (ENTRY_TYPE_GROUPS, ENTRY_TYPE_GLOBAL)
 SUBENTRY_TYPE_GROUP = "light_group"
-ENTRY_TITLE = "Light Wrapper"
+
+# Entry titles are not translated by Home Assistant, so they are picked once
+# from the system language when the entries are created.
+ENTRY_TITLES = {
+    ENTRY_TYPE_GLOBAL: {"de": "Globale Einstellungen", "en": "Global settings"},
+    ENTRY_TYPE_GROUPS: {"de": "Lichtgruppen", "en": "Light groups"},
+}
 
 # Setting keys (global ones in entry.options, groups in subentry.data)
 CONF_DEFAULT_BRIGHTNESS = "default_brightness_pct"

@@ -1,7 +1,7 @@
 """Light Wrapper: combines several lights into one light entity with defaults.
 
-There is exactly one config entry. Its options are the global settings
-(default transitions for all groups); each light group is a subentry.
+There are two config entries: "Global settings" (its options are the default
+transitions for all groups) and "Light groups" (each light group is a subentry).
 """
 
 from __future__ import annotations
@@ -10,14 +10,17 @@ from collections.abc import Callable, Hashable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from homeassistant.config_entries import ConfigEntry, ConfigSubentry
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState, ConfigSubentry
 from homeassistant.const import CONF_ENTITIES, Platform
 from homeassistant.core import HomeAssistant, callback
 
 from .const import (
     CONF_APPLY_WHEN_ON,
+    CONF_ENTRY_TYPE,
     DEFAULT_APPLY_WHEN_ON,
     DEFAULT_KEYS,
+    DOMAIN,
+    ENTRY_TYPE_GLOBAL,
     MAX_TRANSITION,
     MIN_TRANSITION,
     SUBENTRY_TYPE_GROUP,
@@ -26,6 +29,8 @@ from .const import (
 )
 
 PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.NUMBER, Platform.SWITCH]
+# The "Global settings" entry only has number entities
+GLOBAL_PLATFORMS: list[Platform] = [Platform.NUMBER]
 
 
 @dataclass
@@ -60,7 +65,11 @@ class LightWrapperData:
 
 @dataclass
 class LightWrapperRuntime:
-    """Runtime data of the config entry."""
+    """Runtime data of a config entry.
+
+    Global entry: global_settings holds the settings, groups is empty.
+    Groups entry: groups holds one entry per light group, global_settings is unused.
+    """
 
     global_settings: LightWrapperData
     groups: dict[str, LightWrapperData]  # subentry_id -> settings
@@ -94,6 +103,20 @@ def defaults_from_options(options: Mapping[str, Any]) -> dict[str, float]:
 def apply_when_on_from_options(options: Mapping[str, Any]) -> bool:
     """The "apply when on" switch; if it is missing, the default (on) applies."""
     return bool(options.get(CONF_APPLY_WHEN_ON, DEFAULT_APPLY_WHEN_ON))
+
+
+def is_global(entry: ConfigEntry) -> bool:
+    """True for the "Global settings" entry."""
+    return entry.data.get(CONF_ENTRY_TYPE) == ENTRY_TYPE_GLOBAL
+
+
+@callback
+def global_defaults(hass: HomeAssistant) -> dict[str, float]:
+    """Defaults of the loaded "Global settings" entry (empty if there is none)."""
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        if is_global(entry) and entry.state is ConfigEntryState.LOADED:
+            return entry.runtime_data.global_settings.defaults
+    return {}
 
 
 def group_subentries(entry: ConfigEntry) -> dict[str, ConfigSubentry]:
@@ -145,7 +168,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry)
         structure=_structure(entry),
     )
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(entry, _platforms(entry))
     return True
 
 
@@ -173,4 +196,8 @@ async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigE
 
 async def async_unload_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry) -> bool:
     """Unload the config entry."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    return await hass.config_entries.async_unload_platforms(entry, _platforms(entry))
+
+
+def _platforms(entry: ConfigEntry) -> list[Platform]:
+    return GLOBAL_PLATFORMS if is_global(entry) else PLATFORMS

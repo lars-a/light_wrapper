@@ -3,11 +3,11 @@
     "step": {
       "user": {
         "title": "Light Wrapper einrichten",
-        "description": "Legt den Eintrag „Light Wrapper“ mit den globalen Einstellungen an. Lichtgruppen fügst du danach über „Lichtgruppe hinzufügen“ hinzu."
+        "description": "Legt die Einträge „Globale Einstellungen“ und „Lichtgruppen“ an. Lichtgruppen fügst du danach am Eintrag „Lichtgruppen“ über „Lichtgruppe hinzufügen“ hinzu."
       }
     },
     "abort": {
-      "single_instance_allowed": "Light Wrapper ist bereits eingerichtet. Lichtgruppen fügst du über „Lichtgruppe hinzufügen“ hinzu."
+      "already_configured": "Light Wrapper ist bereits eingerichtet. Lichtgruppen fügst du am Eintrag „Lichtgruppen“ über „Lichtgruppe hinzufügen“ hinzu."
     }
   },
   "options": {

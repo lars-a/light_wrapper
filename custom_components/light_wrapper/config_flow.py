@@ -9,6 +9,7 @@ import voluptuous as vol
 
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.config_entries import (
+    SOURCE_SYSTEM,
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
@@ -20,15 +21,18 @@ from homeassistant.const import CONF_ENTITIES, CONF_NAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er, selector
 
-from . import apply_when_on_from_options, normalize_default
+from . import apply_when_on_from_options, is_global, normalize_default
 from .const import (
     CONF_APPLY_WHEN_ON,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
     CONF_DEFAULT_TRANSITION_OFF,
     CONF_DEFAULT_TRANSITION_ON,
+    CONF_ENTRY_TYPE,
     DOMAIN,
-    ENTRY_TITLE,
+    ENTRY_TITLES,
+    ENTRY_TYPE_GROUPS,
+    ENTRY_TYPES,
     FALLBACK_BRIGHTNESS_PCT,
     FALLBACK_COLOR_TEMP_KELVIN,
     FALLBACK_TRANSITION,
@@ -185,9 +189,10 @@ def _with_name(name: str | None, schema: vol.Schema) -> vol.Schema:
 
 
 class LightWrapperConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Set up the integration: creates the only entry (global settings) right away.
+    """Set up the integration: creates the "Light groups" and "Global settings" entries.
 
-    Light groups are added afterwards as subentries.
+    Both are created right away without questions. Light groups are added
+    afterwards as subentries of "Light groups".
     """
 
     VERSION = 1
@@ -199,14 +204,54 @@ class LightWrapperConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @classmethod
     @callback
+    def async_supports_options_flow(cls, config_entry: ConfigEntry) -> bool:
+        # Only the global entry has a "Configure" dialog
+        return is_global(config_entry)
+
+    @classmethod
+    @callback
     def async_get_supported_subentry_types(
         cls, config_entry: ConfigEntry
     ) -> dict[str, type[ConfigSubentryFlow]]:
-        return {SUBENTRY_TYPE_GROUP: LightGroupSubentryFlow}
+        # "Add light group" only on the groups entry
+        if config_entry.data.get(CONF_ENTRY_TYPE) == ENTRY_TYPE_GROUPS:
+            return {SUBENTRY_TYPE_GROUP: LightGroupSubentryFlow}
+        return {}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        # Only one entry allowed (single_config_entry in the manifest)
-        return self.async_create_entry(title=ENTRY_TITLE, data={}, options={})
+        """Create the missing entries; the second one via its own flow."""
+        existing = {
+            entry.data.get(CONF_ENTRY_TYPE) for entry in self._async_current_entries()
+        }
+        missing = [entry_type for entry_type in ENTRY_TYPES if entry_type not in existing]
+        if not missing:
+            return self.async_abort(reason="already_configured")
+
+        first, *others = missing
+        for entry_type in others:
+            self.hass.async_create_task(
+                self.hass.config_entries.flow.async_init(
+                    DOMAIN,
+                    context={"source": SOURCE_SYSTEM},
+                    data={CONF_ENTRY_TYPE: entry_type},
+                )
+            )
+        return await self._async_create(first)
+
+    async def async_step_system(self, data: dict[str, Any]) -> ConfigFlowResult:
+        """Create an entry started by async_step_user."""
+        return await self._async_create(data[CONF_ENTRY_TYPE])
+
+    async def _async_create(self, entry_type: str) -> ConfigFlowResult:
+        await self.async_set_unique_id(entry_type)
+        self._abort_if_unique_id_configured()
+        titles = ENTRY_TITLES[entry_type]
+        language = (self.hass.config.language or "en").split("-")[0]
+        return self.async_create_entry(
+            title=titles.get(language, titles["en"]),
+            data={CONF_ENTRY_TYPE: entry_type},
+            options={},
+        )
 
 
 class LightWrapperOptionsFlow(OptionsFlow):

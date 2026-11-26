@@ -32,18 +32,20 @@ Existing HACS installations are moved to the Marketplace automatically when upda
 [![Set up the integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=light_wrapper)
 
 4. Click the button (or **Settings → Devices & services → Integrations → Add integration → Light Wrapper**).
-   The **Light Wrapper** entry is created right away, without further questions. It holds the global settings.
+   Two entries are created right away, without further questions: **Global settings** and **Light groups**.
 
 **Add light groups**
 
 [![Open the integration](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=light_wrapper)
 
-5. On the integration page (**Devices & services → Light Wrapper**), use **Add light group** and enter a name, the lights and (optionally) defaults.
+5. On the integration page (**Devices & services → Light Wrapper**), use **Add light group** on the **Light groups** entry and enter a name, the lights and (optionally) defaults.
 
 The integration page is organized like this:
 
-* **Light Wrapper**: the only entry. Use **Configure** (gear icon) to change the global settings.
-* Below it, the **light groups**. Each has its own device and can be edited there (name, lights, defaults) or deleted. Deleting a group also removes its device and entities.
+* **Global settings**: use **Configure** (gear icon) to change the default transitions for all groups.
+* **Light groups**: lists the light groups below it. Each has its own device and can be edited there (name, lights, defaults) or deleted. Deleting a group also removes its device and entities.
+
+Each entry exists only once. The entry names follow the system language at the time they are created and can be renamed. If you delete one of them, **Add entry** on the integration page creates it again.
 
 **Updates**
 
@@ -81,7 +83,7 @@ The range of the default color temperature is the **common range** of all lights
 
 ## Global settings
 
-Open the global settings with **Configure** on the **Light Wrapper** entry. They define default transitions for **all** light groups, separately for turning on and off (0–10 s each, in 0.1 s steps). Each enabled transition gets a number entity on the **Global settings** device (`number.global_settings_transition_on` or `…_transition_off`).
+Open the global settings with **Configure** on the **Global settings** entry. They define default transitions for **all** light groups, separately for turning on and off (0–10 s each, in 0.1 s steps). Each enabled transition gets a number entity on the **Global settings** device (`number.global_settings_transition_on` or `…_transition_off`).
 
 Each group can set its own value in its edit dialog with "Use own transition …". The group's own value takes precedence; without one, the global value applies, and without either, no transition is sent.
 

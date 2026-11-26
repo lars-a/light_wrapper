@@ -33,6 +33,7 @@ from .conftest import (
     WRAPPER_ID,
     calls_by_entity,
     set_member,
+    global_entry,
     setup_integration,
     setup_wrapper,
 )
@@ -381,11 +382,15 @@ async def test_global_transition_change_applies_without_reload(
     entry = await setup_wrapper(
         hass, [CT_LIGHT], global_options={CONF_DEFAULT_TRANSITION_ON: 0.5}
     )
-    runtime_before = entry.runtime_data
+    global_settings = global_entry(hass)
+    runtime_before = global_settings.runtime_data
 
-    hass.config_entries.async_update_entry(entry, options={CONF_DEFAULT_TRANSITION_ON: 3.0})
+    hass.config_entries.async_update_entry(
+        global_settings, options={CONF_DEFAULT_TRANSITION_ON: 3.0}
+    )
     await hass.async_block_till_done()
-    assert entry.runtime_data is runtime_before  # no reload
+    assert global_settings.runtime_data is runtime_before  # no reload
+    assert entry.runtime_data is not None
 
     await _turn_on(hass)
     assert calls_by_entity(member_calls)[CT_LIGHT] == (SERVICE_TURN_ON, {ATTR_TRANSITION: 3.0})

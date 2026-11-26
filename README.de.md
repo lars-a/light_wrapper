@@ -32,18 +32,20 @@ Bestehende HACS-Installationen werden beim Update auf 2026.11 automatisch in den
 [![Integration einrichten](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=light_wrapper)
 
 4. Auf die Schaltfläche klicken (oder **Einstellungen → Geräte & Dienste → Integrationen → Integration hinzufügen → Light Wrapper**).
-   Es wird sofort der Eintrag **Light Wrapper** angelegt, ohne weitere Fragen. Er enthält die globalen Einstellungen.
+   Es werden sofort zwei Einträge angelegt, ohne weitere Fragen: **Globale Einstellungen** und **Lichtgruppen**.
 
 **Lichtgruppen anlegen**
 
 [![Integration öffnen](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=light_wrapper)
 
-5. Auf der Seite der Integration (**Geräte & Dienste → Light Wrapper**) über **Lichtgruppe hinzufügen** Namen, Lichter und (optional) Standardwerte eingeben.
+5. Auf der Seite der Integration (**Geräte & Dienste → Light Wrapper**) am Eintrag **Lichtgruppen** über **Lichtgruppe hinzufügen** Namen, Lichter und (optional) Standardwerte eingeben.
 
 Die Seite der Integration ist so aufgebaut:
 
-* **Light Wrapper**: der einzige Eintrag. Über **Konfigurieren** (Zahnrad) stellst du die globalen Einstellungen ein.
-* Darunter die **Lichtgruppen**. Jede hat ein eigenes Gerät und lässt sich dort bearbeiten (Name, Lichter, Standardwerte) oder löschen. Beim Löschen verschwinden auch ihr Gerät und ihre Entitäten.
+* **Globale Einstellungen**: Über **Konfigurieren** (Zahnrad) stellst du die Standard-Übergangszeiten für alle Gruppen ein.
+* **Lichtgruppen**: Darunter stehen die Lichtgruppen. Jede hat ein eigenes Gerät und lässt sich dort bearbeiten (Name, Lichter, Standardwerte) oder löschen. Beim Löschen verschwinden auch ihr Gerät und ihre Entitäten.
+
+Beide Einträge gibt es nur einmal. Ihre Namen richten sich beim Anlegen nach der Systemsprache und lassen sich umbenennen. Löschst du einen davon, legt **Eintrag hinzufügen** auf der Seite der Integration ihn neu an.
 
 **Updates**
 
@@ -81,7 +83,7 @@ Der Bereich der Standard-Farbtemperatur ist der **gemeinsame Bereich** aller Lic
 
 ## Globale Einstellungen
 
-Die globalen Einstellungen öffnest du über **Konfigurieren** am Eintrag **Light Wrapper**. Sie legen Standard-Übergangszeiten für **alle** Lichtgruppen fest, getrennt für Ein- und Ausschalten (je 0–10 s in 0,1-s-Schritten). Für jede aktivierte Übergangszeit gibt es eine Number-Entität am Gerät **Globale Einstellungen** (`number.globale_einstellungen_ubergangszeit_einschalten` bzw. `…_ausschalten`).
+Die globalen Einstellungen öffnest du über **Konfigurieren** am Eintrag **Globale Einstellungen**. Sie legen Standard-Übergangszeiten für **alle** Lichtgruppen fest, getrennt für Ein- und Ausschalten (je 0–10 s in 0,1-s-Schritten). Für jede aktivierte Übergangszeit gibt es eine Number-Entität am Gerät **Globale Einstellungen** (`number.globale_einstellungen_ubergangszeit_einschalten` bzw. `…_ausschalten`).
 
 Jede Gruppe kann in ihrem Bearbeiten-Dialog mit „Eigene Übergangszeit … verwenden“ einen eigenen Wert festlegen. Der eigene Wert geht vor; ohne eigenen Wert gilt der globale, und ohne beides wird keine Übergangszeit gesendet.
 

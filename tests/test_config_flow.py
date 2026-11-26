@@ -20,8 +20,10 @@ from custom_components.light_wrapper.const import (
     CONF_DEFAULT_COLOR_TEMP,
     CONF_DEFAULT_TRANSITION_OFF,
     CONF_DEFAULT_TRANSITION_ON,
+    CONF_ENTRY_TYPE,
     DOMAIN,
-    ENTRY_TITLE,
+    ENTRY_TYPE_GLOBAL,
+    ENTRY_TYPE_GROUPS,
     SUBENTRY_TYPE_GROUP,
 )
 
@@ -32,6 +34,7 @@ from .conftest import (
     number_entity_id,
     set_member,
     setup_global,
+    setup_groups,
     setup_wrapper,
 )
 
@@ -71,27 +74,63 @@ async def _reconfigure_flow(hass: HomeAssistant, entry):
 # --------------------------------------------------------------------------- Setup
 
 
-async def test_setup_creates_single_entry_without_questions(hass: HomeAssistant) -> None:
+async def test_setup_creates_both_entries_without_questions(hass: HomeAssistant) -> None:
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
     await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["title"] == ENTRY_TITLE
-    assert result["data"] == {}
-    assert result["options"] == {}
+    assert result["title"] == "Light groups"
+    assert result["data"] == {CONF_ENTRY_TYPE: ENTRY_TYPE_GROUPS}
+
+    entries = {
+        entry.data[CONF_ENTRY_TYPE]: entry for entry in hass.config_entries.async_entries(DOMAIN)
+    }
+    assert set(entries) == {ENTRY_TYPE_GLOBAL, ENTRY_TYPE_GROUPS}
+    global_settings = entries[ENTRY_TYPE_GLOBAL]
+    groups = entries[ENTRY_TYPE_GROUPS]
+    assert global_settings.title == "Global settings"
+    assert global_settings.unique_id == ENTRY_TYPE_GLOBAL
+    assert groups.unique_id == ENTRY_TYPE_GROUPS
+
+    # "Configure" only on the global entry, "Add light group" only on the groups entry
+    assert global_settings.supports_options is True
+    assert groups.supports_options is False
+    assert global_settings.supported_subentry_types == {}
+    assert set(groups.supported_subentry_types) == {SUBENTRY_TYPE_GROUP}
 
     # Global number entities only exist once one is enabled
-    entry = hass.config_entries.async_entries(DOMAIN)[0]
-    assert global_number_entity_id(hass, entry, CONF_DEFAULT_TRANSITION_ON) is None
+    assert global_number_entity_id(hass, global_settings, CONF_DEFAULT_TRANSITION_ON) is None
 
-    # Only one entry allowed
+    # Both entries exist only once
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
     assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "single_instance_allowed"
+    assert result["reason"] == "already_configured"
+    assert len(hass.config_entries.async_entries(DOMAIN)) == 2
+
+
+async def test_setup_recreates_missing_entry(hass: HomeAssistant) -> None:
+    groups = await setup_groups(hass)
+    global_id = next(
+        entry.entry_id
+        for entry in hass.config_entries.async_entries(DOMAIN)
+        if entry.entry_id != groups.entry_id
+    )
+    await hass.config_entries.async_remove(global_id)
+    await hass.async_block_till_done()
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"] == {CONF_ENTRY_TYPE: ENTRY_TYPE_GLOBAL}
+    assert len(hass.config_entries.async_entries(DOMAIN)) == 2
+    assert len(groups.subentries) == 0  # groups entry untouched
 
 
 # --------------------------------------------------------------------------- Add group
@@ -100,7 +139,7 @@ async def test_setup_creates_single_entry_without_questions(hass: HomeAssistant)
 async def test_add_group(hass: HomeAssistant) -> None:
     set_member(hass, CT_LIGHT, "off")
     set_member(hass, DIM_LIGHT, "off", modes=("brightness",))
-    entry = await setup_global(hass)
+    entry = await setup_groups(hass)
 
     result = await _add_group_flow(hass, entry)
     assert result["type"] is FlowResultType.FORM
@@ -150,7 +189,7 @@ async def test_add_group(hass: HomeAssistant) -> None:
 
 
 async def test_add_group_without_defaults(hass: HomeAssistant) -> None:
-    entry = await setup_global(hass)
+    entry = await setup_groups(hass)
     result = await _add_group_flow(hass, entry)
     # Sliders always have a value; the toggles decide
     result = await hass.config_entries.subentries.async_configure(
@@ -172,7 +211,7 @@ async def test_add_group_without_defaults(hass: HomeAssistant) -> None:
 
 
 async def test_add_group_requires_lights(hass: HomeAssistant) -> None:
-    entry = await setup_global(hass)
+    entry = await setup_groups(hass)
     result = await _add_group_flow(hass, entry)
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"], {CONF_NAME: "Leer", CONF_ENTITIES: []}
@@ -183,7 +222,7 @@ async def test_add_group_requires_lights(hass: HomeAssistant) -> None:
 
 async def test_add_group_clamps_color_temp_to_selected_lights(hass: HomeAssistant) -> None:
     set_member(hass, CT_LIGHT, "off", min_kelvin=2700, max_kelvin=5000)
-    entry = await setup_global(hass)
+    entry = await setup_groups(hass)
 
     result = await _add_group_flow(hass, entry)
     config = _color_temp_selector_config(result)
