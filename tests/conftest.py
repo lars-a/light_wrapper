@@ -12,6 +12,7 @@ from homeassistant.config_entries import ConfigSubentryData
 
 from homeassistant.const import CONF_ENTITIES
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.light_wrapper import LightWrapperData, group_subentries
@@ -130,6 +131,18 @@ async def setup_groups(hass: HomeAssistant) -> MockConfigEntry:
 def global_entry(hass: HomeAssistant) -> MockConfigEntry:
     """The "Global settings" entry."""
     return hass.config_entries.async_entry_for_domain_unique_id(DOMAIN, ENTRY_TYPE_GLOBAL)
+
+
+def find_device(hass: HomeAssistant, identifier: str) -> dr.DeviceEntry | None:
+    """Device with the identifier (DOMAIN, identifier).
+
+    device_registry.async_get_device is deprecated from 2026.10 and its
+    successor is missing in older versions, so search all devices.
+    """
+    for device in dr.async_get(hass).devices.values():
+        if (DOMAIN, identifier) in device.identifiers:
+            return device
+    return None
 
 
 def group_id(entry: MockConfigEntry) -> str:

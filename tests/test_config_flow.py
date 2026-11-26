@@ -6,7 +6,6 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_ENTITIES, CONF_NAME, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.helpers import device_registry as dr
 from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -32,6 +31,7 @@ from custom_components.light_wrapper.const import (
 )
 
 from .conftest import (
+    find_device,
     global_number_entity_id,
     group_data,
     group_id,
@@ -215,7 +215,7 @@ async def test_add_group(hass: HomeAssistant) -> None:
     assert number_entity_id(hass, entry, CONF_DEFAULT_BRIGHTNESS) is not None
 
     # The group has its own device that belongs to the subentry
-    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, group_id(entry))})
+    device = find_device(hass, group_id(entry))
     assert device is not None
     assert device.name == "Wohnzimmer"
     assert group_id(entry) in device.config_entries_subentries[entry.entry_id]
@@ -329,7 +329,7 @@ async def test_reconfigure_group(hass: HomeAssistant) -> None:
     assert wrapper.attributes["entity_id"] == [CT_LIGHT, DIM_LIGHT]
     assert CONF_DEFAULT_BRIGHTNESS not in wrapper.attributes
 
-    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, group_id(entry))})
+    device = find_device(hass, group_id(entry))
     assert device.name == "Stube"
 
     # The brightness number entity is gone after the reload
@@ -395,7 +395,7 @@ async def test_remove_group(hass: HomeAssistant) -> None:
     assert not entry.subentries
     state = hass.states.get("light.wohnzimmer")
     assert state is None or state.state == STATE_UNAVAILABLE
-    assert dr.async_get(hass).async_get_device(identifiers={(DOMAIN, subentry_id)}) is None
+    assert find_device(hass, subentry_id) is None
 
 
 # --------------------------------------------------------------------------- Global settings
@@ -429,7 +429,7 @@ async def test_global_options_flow(hass: HomeAssistant) -> None:
     assert global_number_entity_id(hass, entry, CONF_DEFAULT_TRANSITION_OFF) is not None
 
     # The "Global settings" device belongs to the main entry, not to a group
-    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, entry.entry_id)})
+    device = find_device(hass, entry.entry_id)
     assert device is not None
     assert device.config_entries_subentries[entry.entry_id] == {None}
 

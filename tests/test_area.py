@@ -10,7 +10,7 @@ from homeassistant.helpers import area_registry as ar, device_registry as dr, en
 
 from custom_components.light_wrapper.const import CONF_AREA, DOMAIN, SUBENTRY_TYPE_GROUP
 
-from .conftest import group_id, set_member, setup_groups
+from .conftest import find_device, group_id, set_member, setup_groups
 
 LIGHT = "light.decke"
 
@@ -30,7 +30,7 @@ async def _add_group(hass: HomeAssistant, entry, **extra):
 
 
 def _device(hass: HomeAssistant, entry):
-    return dr.async_get(hass).async_get_device(identifiers={(DOMAIN, group_id(entry))})
+    return find_device(hass, group_id(entry))
 
 
 async def test_new_group_gets_area(hass: HomeAssistant) -> None:

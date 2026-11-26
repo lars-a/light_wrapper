@@ -212,17 +212,22 @@ def _async_create_group_devices(hass: HomeAssistant, entry: ConfigEntry) -> None
     """
     device_registry = dr.async_get(hass)
     area_registry = ar.async_get(hass)
+    # async_get_device is deprecated from 2026.10, its successor is missing in 2025.3
+    existing = {
+        identifier
+        for device in dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+        for identifier in device.identifiers
+    }
     for subentry_id, subentry in group_subentries(entry).items():
         area_id = subentry.data.get(CONF_AREA)
         if not area_id or area_registry.async_get_area(area_id) is None:
             continue
-        identifiers = {(DOMAIN, subentry_id)}
-        if device_registry.async_get_device(identifiers=identifiers) is not None:
+        if (DOMAIN, subentry_id) in existing:
             continue
         device = device_registry.async_get_or_create(
             config_entry_id=entry.entry_id,
             config_subentry_id=subentry_id,
-            identifiers=identifiers,
+            identifiers={(DOMAIN, subentry_id)},
             name=subentry.title,
             entry_type=dr.DeviceEntryType.SERVICE,
             manufacturer="Light Wrapper",
