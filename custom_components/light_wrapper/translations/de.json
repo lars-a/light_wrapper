@@ -49,7 +49,8 @@
             "default_transition_on": "Übergangszeit beim Einschalten",
             "use_default_transition_off": "Eigene Übergangszeit beim Ausschalten verwenden",
             "default_transition_off": "Übergangszeit beim Ausschalten",
-            "apply_defaults_when_on": "Standardwerte auch bei eingeschaltetem Licht"
+            "apply_defaults_when_on": "Standardwerte auch bei eingeschaltetem Licht",
+            "on_when_all_on": "Erst an, wenn alle Lichter an sind"
           },
           "data_description": {
             "default_brightness_pct": "Wird beim Einschalten verwendet, wenn keine Helligkeit angegeben ist.",
@@ -58,7 +59,8 @@
             "default_transition_on": "Wird beim Einschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
             "use_default_transition_off": "Aus: Es gilt die globale Übergangszeit, falls eine eingestellt ist.",
             "default_transition_off": "Wird beim Ausschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
-            "apply_defaults_when_on": "Ein Einschalten ohne Parameter setzt die Standardwerte auch dann, wenn die Gruppe schon an ist."
+            "apply_defaults_when_on": "Ein Einschalten ohne Parameter setzt die Standardwerte auch dann, wenn die Gruppe schon an ist.",
+            "on_when_all_on": "Aus: Die Gruppe ist an, sobald ein Licht an ist. An: erst, wenn alle Lichter an sind (nicht verfügbare Lichter zählen nicht)."
           }
         },
         "reconfigure": {
@@ -74,7 +76,8 @@
             "default_transition_on": "Übergangszeit beim Einschalten",
             "use_default_transition_off": "Eigene Übergangszeit beim Ausschalten verwenden",
             "default_transition_off": "Übergangszeit beim Ausschalten",
-            "apply_defaults_when_on": "Standardwerte auch bei eingeschaltetem Licht"
+            "apply_defaults_when_on": "Standardwerte auch bei eingeschaltetem Licht",
+            "on_when_all_on": "Erst an, wenn alle Lichter an sind"
           },
           "data_description": {
             "default_brightness_pct": "Wird beim Einschalten verwendet, wenn keine Helligkeit angegeben ist.",
@@ -83,7 +86,8 @@
             "default_transition_on": "Wird beim Einschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
             "use_default_transition_off": "Aus: Es gilt die globale Übergangszeit, falls eine eingestellt ist.",
             "default_transition_off": "Wird beim Ausschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
-            "apply_defaults_when_on": "Ein Einschalten ohne Parameter setzt die Standardwerte auch dann, wenn die Gruppe schon an ist."
+            "apply_defaults_when_on": "Ein Einschalten ohne Parameter setzt die Standardwerte auch dann, wenn die Gruppe schon an ist.",
+            "on_when_all_on": "Aus: Die Gruppe ist an, sobald ein Licht an ist. An: erst, wenn alle Lichter an sind (nicht verfügbare Lichter zählen nicht)."
           }
         }
       },

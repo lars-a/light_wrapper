@@ -38,6 +38,12 @@ DEFAULT_KEYS = (CONF_DEFAULT_BRIGHTNESS, CONF_DEFAULT_COLOR_TEMP, *TRANSITION_KE
 CONF_APPLY_WHEN_ON = "apply_defaults_when_on"
 DEFAULT_APPLY_WHEN_ON = True
 
+# The group only counts as on when all members are on (instead of any member).
+# Only a setting in the group's edit dialog, no entity. Off by default;
+# only an enabled setting (True) is stored.
+CONF_ON_WHEN_ALL_ON = "on_when_all_on"
+DEFAULT_ON_WHEN_ALL_ON = False
+
 # Value ranges for the settings
 MIN_BRIGHTNESS_PCT = 1
 MAX_BRIGHTNESS_PCT = 100

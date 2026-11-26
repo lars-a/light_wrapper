@@ -24,8 +24,10 @@ from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     CONF_APPLY_WHEN_ON,
+    CONF_ON_WHEN_ALL_ON,
     CONF_ENTRY_TYPE,
     DEFAULT_APPLY_WHEN_ON,
+    DEFAULT_ON_WHEN_ALL_ON,
     DEFAULT_KEYS,
     DOMAIN,
     ENTRY_TYPE_GLOBAL,
@@ -52,6 +54,7 @@ class LightWrapperData:
     entities: list[str]
     defaults: dict[str, float]
     apply_when_on: bool = DEFAULT_APPLY_WHEN_ON
+    on_when_all_on: bool = DEFAULT_ON_WHEN_ALL_ON
     _listeners: list[Callable[[], None]] = field(default_factory=list)
 
     @callback
@@ -67,10 +70,16 @@ class LightWrapperData:
         return _remove
 
     @callback
-    def async_set_settings(self, defaults: dict[str, float], apply_when_on: bool) -> None:
+    def async_set_settings(
+        self,
+        defaults: dict[str, float],
+        apply_when_on: bool = DEFAULT_APPLY_WHEN_ON,
+        on_when_all_on: bool = DEFAULT_ON_WHEN_ALL_ON,
+    ) -> None:
         """Replace the defaults and the behavior when on, then notify listeners."""
         self.defaults = defaults
         self.apply_when_on = apply_when_on
+        self.on_when_all_on = on_when_all_on
         for update_callback in list(self._listeners):
             update_callback()
 
@@ -112,6 +121,11 @@ def defaults_from_options(options: Mapping[str, Any]) -> dict[str, float]:
     }
 
 
+def on_when_all_on_from_options(options: Mapping[str, Any]) -> bool:
+    """The "on only when all are on" setting; if it is missing, the default (off) applies."""
+    return bool(options.get(CONF_ON_WHEN_ALL_ON, DEFAULT_ON_WHEN_ALL_ON))
+
+
 def apply_when_on_from_options(options: Mapping[str, Any]) -> bool:
     """The "apply when on" switch; if it is missing, the default (on) applies."""
     return bool(options.get(CONF_APPLY_WHEN_ON, DEFAULT_APPLY_WHEN_ON))
@@ -145,6 +159,7 @@ def _group_settings(subentry: ConfigSubentry) -> LightWrapperData:
         entities=list(subentry.data.get(CONF_ENTITIES, [])),
         defaults=defaults_from_options(subentry.data),
         apply_when_on=apply_when_on_from_options(subentry.data),
+        on_when_all_on=on_when_all_on_from_options(subentry.data),
     )
 
 
@@ -226,7 +241,9 @@ async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigE
     )
     for subentry_id, subentry in group_subentries(entry).items():
         runtime.groups[subentry_id].async_set_settings(
-            defaults_from_options(subentry.data), apply_when_on_from_options(subentry.data)
+            defaults_from_options(subentry.data),
+            apply_when_on_from_options(subentry.data),
+            on_when_all_on_from_options(subentry.data),
         )
 
 

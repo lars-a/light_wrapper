@@ -18,6 +18,7 @@ from custom_components.light_wrapper.config_flow import (
 )
 from custom_components.light_wrapper.const import (
     CONF_APPLY_WHEN_ON,
+    CONF_ON_WHEN_ALL_ON,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
     CONF_DEFAULT_TRANSITION_OFF,
@@ -297,6 +298,7 @@ async def test_reconfigure_group(hass: HomeAssistant) -> None:
     assert suggested[CONF_DEFAULT_COLOR_TEMP] == 2700
     assert suggested[CONF_USE_DEFAULT_TRANSITION_ON] is False
     assert suggested[CONF_APPLY_WHEN_ON] is True  # default
+    assert suggested[CONF_ON_WHEN_ALL_ON] is False  # default
 
     # Rename, disable brightness, add the floor lamp
     result = await hass.config_entries.subentries.async_configure(
@@ -428,3 +430,24 @@ async def test_global_options_flow(hass: HomeAssistant) -> None:
     device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, entry.entry_id)})
     assert device is not None
     assert device.config_entries_subentries[entry.entry_id] == {None}
+
+
+async def test_reconfigure_on_when_all_on(hass: HomeAssistant) -> None:
+    set_member(hass, CT_LIGHT, "off")
+    entry = await setup_wrapper(hass, [CT_LIGHT])
+
+    result = await _reconfigure_flow(hass, entry)
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {CONF_ENTITIES: [CT_LIGHT], CONF_ON_WHEN_ALL_ON: True}
+    )
+    await hass.async_block_till_done()
+    assert group_data(entry) == {CONF_ENTITIES: [CT_LIGHT], CONF_ON_WHEN_ALL_ON: True}
+
+    # Prefilled when editing again; switching it off removes it (default)
+    result = await _reconfigure_flow(hass, entry)
+    assert _suggested(result)[CONF_ON_WHEN_ALL_ON] is True
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {CONF_ENTITIES: [CT_LIGHT], CONF_ON_WHEN_ALL_ON: False}
+    )
+    await hass.async_block_till_done()
+    assert group_data(entry) == {CONF_ENTITIES: [CT_LIGHT]}

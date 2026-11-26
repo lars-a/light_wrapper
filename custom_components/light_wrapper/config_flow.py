@@ -21,9 +21,15 @@ from homeassistant.const import CONF_ENTITIES, CONF_NAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er, selector
 
-from . import apply_when_on_from_options, is_global, normalize_default
+from . import (
+    apply_when_on_from_options,
+    is_global,
+    normalize_default,
+    on_when_all_on_from_options,
+)
 from .const import (
     CONF_APPLY_WHEN_ON,
+    CONF_ON_WHEN_ALL_ON,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
     CONF_DEFAULT_TRANSITION_OFF,
@@ -118,6 +124,7 @@ def _group_schema(
             ),
             **_transition_fields(),
             vol.Optional(CONF_APPLY_WHEN_ON): selector.BooleanSelector(),
+            vol.Optional(CONF_ON_WHEN_ALL_ON): selector.BooleanSelector(),
         }
     )
 
@@ -161,13 +168,15 @@ def _group_form_values(
     values.update(_toggle_values(options, _GROUP_TOGGLES))
     values[CONF_DEFAULT_COLOR_TEMP] = clamp(values[CONF_DEFAULT_COLOR_TEMP], color_temp_bounds)
     values[CONF_APPLY_WHEN_ON] = apply_when_on_from_options(options)
+    values[CONF_ON_WHEN_ALL_ON] = on_when_all_on_from_options(options)
     return values
 
 
 def _group_options(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str, Any]:
     """Convert a group's form values to settings; disabled defaults are dropped.
 
-    The "apply when on" switch is only stored when it is off.
+    The "apply when on" switch is only stored when it is off, the "on only when
+    all are on" setting only when it is on (both only when not the default).
 
     The color temperature is limited to the common range of the selected lights
     (the selection may have changed in the same form).
@@ -176,6 +185,8 @@ def _group_options(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str,
     options.update(_toggle_options(user_input, _GROUP_TOGGLES))
     if not apply_when_on_from_options(user_input):
         options[CONF_APPLY_WHEN_ON] = False
+    if on_when_all_on_from_options(user_input):
+        options[CONF_ON_WHEN_ALL_ON] = True
     if CONF_DEFAULT_COLOR_TEMP in options:
         options[CONF_DEFAULT_COLOR_TEMP] = clamp(
             options[CONF_DEFAULT_COLOR_TEMP],

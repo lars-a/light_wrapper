@@ -102,6 +102,7 @@ Eine Übergangszeit von 0 s wird ausdrücklich als `transition: 0` gesendet. Das
 ## Zustand der Gruppe
 
 * **An**, sobald mindestens ein Mitglied an ist; **nicht verfügbar**, wenn alle Mitglieder nicht verfügbar sind.
+* Mit **„Erst an, wenn alle Lichter an sind“** (im Bearbeiten-Dialog der Gruppe, standardmäßig aus) ist die Gruppe erst an, wenn alle Mitglieder an sind. Nicht verfügbare oder unbekannte Mitglieder zählen nicht mit. Solange nur einige Mitglieder an sind, gilt die Gruppe als aus; ein `turn_on` setzt dann die Standardwerte wie beim Einschalten.
 * Helligkeit, Farbtemperatur und Farben sind der Mittelwert der eingeschalteten Mitglieder.
 * Unterstützte Farbmodi und Features sind die Vereinigung aller Mitglieder. Als aktueller Farbmodus gilt der häufigste unter den eingeschalteten Mitgliedern.
 * Das Attribut `entity_id` listet die Mitglieder, wie bei normalen Gruppen.

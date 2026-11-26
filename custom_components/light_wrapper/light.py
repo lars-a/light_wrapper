@@ -173,7 +173,13 @@ class LightWrapperLight(LightEntity):
         self.async_on_remove(
             async_track_state_change_event(self.hass, self._entity_ids, _member_changed)
         )
-        self.async_on_remove(self._data.async_add_listener(self.async_write_ha_state))
+        @callback
+        def _settings_changed() -> None:
+            # "on only when all are on" changes the state without a reload
+            self._async_update_group_state()
+            self.async_write_ha_state()
+
+        self.async_on_remove(self._data.async_add_listener(_settings_changed))
         self._async_update_group_state()
 
     # ----------------------------------------------------------------- state
@@ -191,7 +197,14 @@ class LightWrapperLight(LightEntity):
         on_states = [s for s in valid if s.state == STATE_ON]
 
         self._attr_available = any(s.state != STATE_UNAVAILABLE for s in states)
-        self._attr_is_on = bool(on_states) if valid else None
+        # On when any member is on, or only when all are (members that are
+        # unavailable or unknown are not counted)
+        if not valid:
+            self._attr_is_on = None
+        elif self._data.on_when_all_on:
+            self._attr_is_on = len(on_states) == len(valid)
+        else:
+            self._attr_is_on = bool(on_states)
 
         # Average the values of the members that are on
         self._attr_brightness = _mean_int(_values(on_states, ATTR_BRIGHTNESS))

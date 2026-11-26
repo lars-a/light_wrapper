@@ -23,6 +23,7 @@ from homeassistant.core import HomeAssistant
 
 from custom_components.light_wrapper.const import (
     CONF_APPLY_WHEN_ON,
+    CONF_ON_WHEN_ALL_ON,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
     CONF_DEFAULT_TRANSITION_OFF,
@@ -32,6 +33,7 @@ from custom_components.light_wrapper.const import (
 from .conftest import (
     WRAPPER_ID,
     calls_by_entity,
+    group_id,
     set_member,
     global_entry,
     setup_integration,
@@ -413,3 +415,66 @@ async def test_several_groups(hass: HomeAssistant, member_calls) -> None:
         LIGHT_DOMAIN, SERVICE_TURN_ON, {ATTR_ENTITY_ID: "light.flur"}, blocking=True
     )
     assert calls_by_entity(member_calls) == {DIM_LIGHT: (SERVICE_TURN_ON, {ATTR_BRIGHTNESS_PCT: 20})}
+
+
+# --------------------------------------------------------------------------- On only when all are on
+
+
+async def test_on_when_any_member_on_by_default(hass: HomeAssistant) -> None:
+    set_member(hass, CT_LIGHT, "on", brightness=100, kelvin=3000)
+    set_member(hass, DIM_LIGHT, "off", modes=("brightness",))
+    await setup_wrapper(hass, [CT_LIGHT, DIM_LIGHT])
+    assert hass.states.get(WRAPPER_ID).state == STATE_ON
+
+
+async def test_on_only_when_all_members_on(hass: HomeAssistant) -> None:
+    set_member(hass, CT_LIGHT, "on", brightness=100, kelvin=3000)
+    set_member(hass, DIM_LIGHT, "off", modes=("brightness",))
+    await setup_wrapper(hass, [CT_LIGHT, DIM_LIGHT], **{CONF_ON_WHEN_ALL_ON: True})
+    assert hass.states.get(WRAPPER_ID).state == STATE_OFF
+
+    set_member(hass, DIM_LIGHT, "on", modes=("brightness",), brightness=50)
+    await hass.async_block_till_done()
+    assert hass.states.get(WRAPPER_ID).state == STATE_ON
+
+    # Unavailable members are not counted
+    hass.states.async_set(DIM_LIGHT, STATE_UNAVAILABLE)
+    await hass.async_block_till_done()
+    assert hass.states.get(WRAPPER_ID).state == STATE_ON
+
+
+async def test_all_on_mode_turn_on_applies_defaults_to_all(
+    hass: HomeAssistant, member_calls
+) -> None:
+    set_member(hass, CT_LIGHT, "on", brightness=20, kelvin=5000)
+    set_member(hass, DIM_LIGHT, "off", modes=("brightness",))
+    await setup_wrapper(
+        hass,
+        [CT_LIGHT, DIM_LIGHT],
+        **{CONF_ON_WHEN_ALL_ON: True, CONF_APPLY_WHEN_ON: False, CONF_DEFAULT_BRIGHTNESS: 60},
+    )
+    assert hass.states.get(WRAPPER_ID).state == STATE_OFF
+
+    # The group counts as off, so the defaults apply as when switching on
+    await _turn_on(hass)
+
+    calls = calls_by_entity(member_calls)
+    assert calls[CT_LIGHT] == (SERVICE_TURN_ON, {ATTR_BRIGHTNESS_PCT: 60})
+    assert calls[DIM_LIGHT] == (SERVICE_TURN_ON, {ATTR_BRIGHTNESS_PCT: 60})
+
+
+async def test_all_on_setting_change_applies_without_reload(hass: HomeAssistant) -> None:
+    set_member(hass, CT_LIGHT, "on", brightness=100, kelvin=3000)
+    set_member(hass, DIM_LIGHT, "off", modes=("brightness",))
+    entry = await setup_wrapper(hass, [CT_LIGHT, DIM_LIGHT])
+    runtime_before = entry.runtime_data
+    assert hass.states.get(WRAPPER_ID).state == STATE_ON
+
+    subentry = entry.subentries[group_id(entry)]
+    hass.config_entries.async_update_subentry(
+        entry, subentry, data={**subentry.data, CONF_ON_WHEN_ALL_ON: True}
+    )
+    await hass.async_block_till_done()
+
+    assert entry.runtime_data is runtime_before  # no reload
+    assert hass.states.get(WRAPPER_ID).state == STATE_OFF

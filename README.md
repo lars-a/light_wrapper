@@ -102,6 +102,7 @@ A transition of 0 s is sent explicitly as `transition: 0`. This is not the same 
 ## Group state
 
 * **On** as soon as at least one member is on; **unavailable** if all members are unavailable.
+* With **"On only when all lights are on"** (in the group's edit dialog, off by default), the group is only on when all members are on. Members that are unavailable or unknown are not counted. While only some members are on, the group counts as off, so a `turn_on` applies the defaults as when switching on.
 * Brightness, color temperature and colors are the average of the members that are on.
 * Supported color modes and features are the union of all members. The current color mode is the most common one among the members that are on.
 * The `entity_id` attribute lists the members, as with regular groups.
