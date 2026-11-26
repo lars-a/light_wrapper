@@ -18,6 +18,7 @@ from custom_components.light_wrapper.config_flow import (
 )
 from custom_components.light_wrapper.const import (
     CONF_APPLY_WHEN_ON,
+    CONF_HIDE_MEMBERS,
     CONF_ON_WHEN_ALL_ON,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
@@ -299,6 +300,7 @@ async def test_reconfigure_group(hass: HomeAssistant) -> None:
     assert suggested[CONF_USE_DEFAULT_TRANSITION_ON] is False
     assert suggested[CONF_APPLY_WHEN_ON] is True  # default
     assert suggested[CONF_ON_WHEN_ALL_ON] is False  # default
+    assert suggested[CONF_HIDE_MEMBERS] is False  # default
 
     # Rename, disable brightness, add the floor lamp
     result = await hass.config_entries.subentries.async_configure(

@@ -50,7 +50,8 @@
             "use_default_transition_off": "Use own transition when turning off",
             "default_transition_off": "Transition when turning off",
             "apply_defaults_when_on": "Apply defaults when already on",
-            "on_when_all_on": "On only when all lights are on"
+            "on_when_all_on": "On only when all lights are on",
+            "hide_members": "Hide members"
           },
           "data_description": {
             "default_brightness_pct": "Used when the light is turned on without a brightness.",
@@ -60,7 +61,8 @@
             "use_default_transition_off": "Off: the global transition applies, if one is set.",
             "default_transition_off": "Used when turning off without a transition; only sent to lights that support transitions.",
             "apply_defaults_when_on": "Turning on without parameters also applies the defaults when the group is already on.",
-            "on_when_all_on": "Off: the group is on as soon as one light is on. On: only when all lights are on (unavailable lights are not counted)."
+            "on_when_all_on": "Off: the group is on as soon as one light is on. On: only when all lights are on (unavailable lights are not counted).",
+            "hide_members": "Hides the group's lights in the UI (like group helpers). They are shown again when this is turned off, when a light is removed from the group or when the group is deleted. Lights you hid yourself stay hidden."
           }
         },
         "reconfigure": {
@@ -77,7 +79,8 @@
             "use_default_transition_off": "Use own transition when turning off",
             "default_transition_off": "Transition when turning off",
             "apply_defaults_when_on": "Apply defaults when already on",
-            "on_when_all_on": "On only when all lights are on"
+            "on_when_all_on": "On only when all lights are on",
+            "hide_members": "Hide members"
           },
           "data_description": {
             "default_brightness_pct": "Used when the light is turned on without a brightness.",
@@ -87,7 +90,8 @@
             "use_default_transition_off": "Off: the global transition applies, if one is set.",
             "default_transition_off": "Used when turning off without a transition; only sent to lights that support transitions.",
             "apply_defaults_when_on": "Turning on without parameters also applies the defaults when the group is already on.",
-            "on_when_all_on": "Off: the group is on as soon as one light is on. On: only when all lights are on (unavailable lights are not counted)."
+            "on_when_all_on": "Off: the group is on as soon as one light is on. On: only when all lights are on (unavailable lights are not counted).",
+            "hide_members": "Hides the group's lights in the UI (like group helpers). They are shown again when this is turned off, when a light is removed from the group or when the group is deleted. Lights you hid yourself stay hidden."
           }
         }
       },

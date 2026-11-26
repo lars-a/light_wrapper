@@ -19,13 +19,14 @@ from homeassistant.config_entries import (
 )
 from homeassistant.const import CONF_ENTITIES, Platform
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, entity_registry as er
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     CONF_APPLY_WHEN_ON,
-    CONF_ON_WHEN_ALL_ON,
     CONF_ENTRY_TYPE,
+    CONF_HIDE_MEMBERS,
+    CONF_ON_WHEN_ALL_ON,
     DEFAULT_APPLY_WHEN_ON,
     DEFAULT_ON_WHEN_ALL_ON,
     DEFAULT_KEYS,
@@ -163,6 +164,38 @@ def _group_settings(subentry: ConfigSubentry) -> LightWrapperData:
     )
 
 
+def _members(entry: ConfigEntry, *, hidden_only: bool = False) -> set[str]:
+    """Member lights of all groups (only of groups that hide them, if hidden_only)."""
+    return {
+        entity_id
+        for subentry in group_subentries(entry).values()
+        if not hidden_only or subentry.data.get(CONF_HIDE_MEMBERS)
+        for entity_id in subentry.data.get(CONF_ENTITIES, [])
+    }
+
+
+@callback
+def _async_update_hidden_members(
+    hass: HomeAssistant, hide: set[str], candidates: set[str]
+) -> None:
+    """Hide the lights in `hide`, show the other candidates again.
+
+    Only entities hidden by an integration are shown again; lights the user
+    hid themselves stay hidden. Lights without a registry entry are skipped.
+    """
+    registry = er.async_get(hass)
+    for entity_id in candidates | hide:
+        if (registry_entry := registry.async_get(entity_id)) is None:
+            continue
+        if entity_id in hide:
+            if registry_entry.hidden_by is None:
+                registry.async_update_entity(
+                    entity_id, hidden_by=er.RegistryEntryHider.INTEGRATION
+                )
+        elif registry_entry.hidden_by is er.RegistryEntryHider.INTEGRATION:
+            registry.async_update_entity(entity_id, hidden_by=None)
+
+
 def _structure(entry: ConfigEntry) -> Hashable:
     """Everything that requires a reload when it changes.
 
@@ -218,6 +251,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry)
         },
         structure=_structure(entry),
     )
+    if not is_global(entry):
+        _async_update_hidden_members(hass, _members(entry, hidden_only=True), set())
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, _platforms(entry))
     return True
@@ -232,6 +267,13 @@ async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigE
     enabled or disabled, the entry is reloaded.
     """
     runtime = entry.runtime_data
+    if not is_global(entry):
+        # Lights that left a group (or whose group was removed) are candidates too
+        previous = {eid for group in runtime.groups.values() for eid in group.entities}
+        _async_update_hidden_members(
+            hass, _members(entry, hidden_only=True), previous | _members(entry)
+        )
+
     if _structure(entry) != runtime.structure:
         await hass.config_entries.async_reload(entry.entry_id)
         return
@@ -245,6 +287,12 @@ async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigE
             apply_when_on_from_options(subentry.data),
             on_when_all_on_from_options(subentry.data),
         )
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Show the member lights again when the groups entry is deleted."""
+    if not is_global(entry):
+        _async_update_hidden_members(hass, set(), _members(entry))
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry) -> bool:

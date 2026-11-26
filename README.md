@@ -106,6 +106,7 @@ A transition of 0 s is sent explicitly as `transition: 0`. This is not the same 
 * Brightness, color temperature and colors are the average of the members that are on.
 * Supported color modes and features are the union of all members. The current color mode is the most common one among the members that are on.
 * The `entity_id` attribute lists the members, as with regular groups.
+* With **"Hide members"** (in the group's edit dialog, off by default), the group's lights are hidden in the UI, like with group helpers. They are shown again when the setting is turned off, when a light is removed from the group, or when the group or the **Light groups** entry is deleted. Lights you hid yourself stay hidden.
 * The group's active defaults are also shown as attributes of the light entity (`default_brightness_pct`, `default_color_temp_kelvin`, `default_transition_on`, `default_transition_off`). Global transitions do not appear there.
 
 ## License

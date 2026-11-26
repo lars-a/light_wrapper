@@ -44,6 +44,11 @@ DEFAULT_APPLY_WHEN_ON = True
 CONF_ON_WHEN_ALL_ON = "on_when_all_on"
 DEFAULT_ON_WHEN_ALL_ON = False
 
+# Hide the member lights in the UI (entity registry hidden_by=integration),
+# like Home Assistant's group helper. Only a setting in the group's edit
+# dialog. Off by default; only an enabled setting (True) is stored.
+CONF_HIDE_MEMBERS = "hide_members"
+
 # Value ranges for the settings
 MIN_BRIGHTNESS_PCT = 1
 MAX_BRIGHTNESS_PCT = 100

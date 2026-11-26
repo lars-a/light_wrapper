@@ -29,6 +29,7 @@ from . import (
 )
 from .const import (
     CONF_APPLY_WHEN_ON,
+    CONF_HIDE_MEMBERS,
     CONF_ON_WHEN_ALL_ON,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
@@ -125,6 +126,7 @@ def _group_schema(
             **_transition_fields(),
             vol.Optional(CONF_APPLY_WHEN_ON): selector.BooleanSelector(),
             vol.Optional(CONF_ON_WHEN_ALL_ON): selector.BooleanSelector(),
+            vol.Optional(CONF_HIDE_MEMBERS): selector.BooleanSelector(),
         }
     )
 
@@ -169,6 +171,7 @@ def _group_form_values(
     values[CONF_DEFAULT_COLOR_TEMP] = clamp(values[CONF_DEFAULT_COLOR_TEMP], color_temp_bounds)
     values[CONF_APPLY_WHEN_ON] = apply_when_on_from_options(options)
     values[CONF_ON_WHEN_ALL_ON] = on_when_all_on_from_options(options)
+    values[CONF_HIDE_MEMBERS] = bool(options.get(CONF_HIDE_MEMBERS))
     return values
 
 
@@ -176,7 +179,8 @@ def _group_options(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str,
     """Convert a group's form values to settings; disabled defaults are dropped.
 
     The "apply when on" switch is only stored when it is off, the "on only when
-    all are on" setting only when it is on (both only when not the default).
+    all are on" and "hide members" settings only when they are on (all only
+    when not the default).
 
     The color temperature is limited to the common range of the selected lights
     (the selection may have changed in the same form).
@@ -187,6 +191,8 @@ def _group_options(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str,
         options[CONF_APPLY_WHEN_ON] = False
     if on_when_all_on_from_options(user_input):
         options[CONF_ON_WHEN_ALL_ON] = True
+    if user_input.get(CONF_HIDE_MEMBERS):
+        options[CONF_HIDE_MEMBERS] = True
     if CONF_DEFAULT_COLOR_TEMP in options:
         options[CONF_DEFAULT_COLOR_TEMP] = clamp(
             options[CONF_DEFAULT_COLOR_TEMP],
