@@ -41,8 +41,8 @@
           "data": {
             "name": "Name",
             "entities": "Lichter",
-            "use_default_brightness": "Standardhelligkeit verwenden",
-            "default_brightness_pct": "Standardhelligkeit",
+            "use_default_brightness": "Standard-Helligkeit verwenden",
+            "default_brightness_pct": "Standard-Helligkeit",
             "use_default_color_temp": "Standard-Farbtemperatur verwenden",
             "default_color_temp_kelvin": "Standard-Farbtemperatur",
             "use_default_transition_on": "Eigene Übergangszeit beim Einschalten verwenden",
@@ -70,8 +70,8 @@
           "data": {
             "name": "Name",
             "entities": "Lichter",
-            "use_default_brightness": "Standardhelligkeit verwenden",
-            "default_brightness_pct": "Standardhelligkeit",
+            "use_default_brightness": "Standard-Helligkeit verwenden",
+            "default_brightness_pct": "Standard-Helligkeit",
             "use_default_color_temp": "Standard-Farbtemperatur verwenden",
             "default_color_temp_kelvin": "Standard-Farbtemperatur",
             "use_default_transition_on": "Eigene Übergangszeit beim Einschalten verwenden",
@@ -111,16 +111,16 @@
   "entity": {
     "number": {
       "default_brightness": {
-        "name": "Standardhelligkeit"
+        "name": "Standard-Helligkeit"
       },
       "default_color_temp": {
         "name": "Standard-Farbtemperatur"
       },
       "default_transition_on": {
-        "name": "Übergangszeit Einschalten"
+        "name": "Standard-Übergangszeit Einschalten"
       },
       "default_transition_off": {
-        "name": "Übergangszeit Ausschalten"
+        "name": "Standard-Übergangszeit Ausschalten"
       }
     },
     "switch": {
@@ -135,8 +135,8 @@
       "description": "Ändert die Standardwerte einer oder mehrerer Lichtgruppen. Ein Wert schaltet den Standardwert bei Bedarf ein; in YAML schaltet null ihn ab.",
       "fields": {
         "default_brightness_pct": {
-          "name": "Standardhelligkeit",
-          "description": "Standardhelligkeit in %."
+          "name": "Standard-Helligkeit",
+          "description": "Standard-Helligkeit in %."
         },
         "default_color_temp_kelvin": {
           "name": "Standard-Farbtemperatur",

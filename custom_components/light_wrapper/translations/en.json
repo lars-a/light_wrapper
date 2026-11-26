@@ -117,10 +117,10 @@
         "name": "Default color temperature"
       },
       "default_transition_on": {
-        "name": "Transition on"
+        "name": "Default transition on"
       },
       "default_transition_off": {
-        "name": "Transition off"
+        "name": "Default transition off"
       }
     },
     "switch": {

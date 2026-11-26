@@ -64,10 +64,10 @@ Pro Lichtgruppe entsteht ein Gerät mit:
 | Entität | Zweck |
 |---|---|
 | `light.<name>` | Die Lichtgruppe |
-| `number.<name>_standardhelligkeit` | Standardhelligkeit in % (nur wenn aktiviert) |
+| `number.<name>_standard_helligkeit` | Standard-Helligkeit in % (nur wenn aktiviert) |
 | `number.<name>_standard_farbtemperatur` | Standard-Farbtemperatur in K (nur wenn aktiviert; nicht verfügbar, wenn keines der Lichter Farbtemperatur kann) |
-| `number.<name>_ubergangszeit_einschalten` | Eigene Übergangszeit beim Einschalten in s (nur wenn aktiviert) |
-| `number.<name>_ubergangszeit_ausschalten` | Eigene Übergangszeit beim Ausschalten in s (nur wenn aktiviert) |
+| `number.<name>_standard_ubergangszeit_einschalten` | Eigene Übergangszeit beim Einschalten in s (nur wenn aktiviert) |
+| `number.<name>_standard_ubergangszeit_ausschalten` | Eigene Übergangszeit beim Ausschalten in s (nur wenn aktiviert) |
 | `switch.<name>_standardwerte_auch_wenn_an` | Standardwerte auch bei schon eingeschalteter Gruppe anwenden (standardmäßig an, siehe unten) |
 
 Die Entity-IDs hängen von der Systemsprache von Home Assistant ab; hier für Deutsch.
@@ -105,7 +105,7 @@ data:
 
 ## Globale Einstellungen
 
-Die globalen Einstellungen öffnest du über **Konfigurieren** am Eintrag **Globale Einstellungen**. Sie legen Standard-Übergangszeiten für **alle** Lichtgruppen fest, getrennt für Ein- und Ausschalten (je 0–10 s in 0,1-s-Schritten). Für jede aktivierte Übergangszeit gibt es eine Number-Entität am Gerät **Light Wrapper Globale Einstellungen** (`number.light_wrapper_globale_einstellungen_ubergangszeit_einschalten` bzw. `…_ausschalten`).
+Die globalen Einstellungen öffnest du über **Konfigurieren** am Eintrag **Globale Einstellungen**. Sie legen Standard-Übergangszeiten für **alle** Lichtgruppen fest, getrennt für Ein- und Ausschalten (je 0–10 s in 0,1-s-Schritten). Für jede aktivierte Übergangszeit gibt es eine Number-Entität am Gerät **Light Wrapper Globale Einstellungen** (`number.light_wrapper_globale_einstellungen_standard_ubergangszeit_einschalten` bzw. `…_ausschalten`).
 
 Jede Gruppe kann in ihrem Bearbeiten-Dialog mit „Eigene Übergangszeit … verwenden“ einen eigenen Wert festlegen. Der eigene Wert geht vor; ohne eigenen Wert gilt der globale, und ohne beides wird keine Übergangszeit gesendet.
 
@@ -115,7 +115,7 @@ Eine Übergangszeit von 0 s wird ausdrücklich als `transition: 0` gesendet. Das
 
 * Der Schalter **„Standardwerte auch wenn an“** (im Bearbeiten-Dialog der Gruppe oder als Switch-Entität) ist standardmäßig **an**. Dann setzt ein `turn_on` **ohne Parameter** die Standardwerte auch bei schon eingeschalteter Gruppe. Nur `transition` darf zusätzlich angegeben sein. Kommt eine Helligkeit oder Farbe mit, gilt das normale Verhalten: Bei eingeschalteter Gruppe wird nur der angegebene Wert geändert. Ein Helligkeits-Slider im Dashboard setzt also nicht nebenbei die Farbtemperatur zurück.
 * Ist der Schalter **aus**, greifen Standardwerte nur, wenn die Gruppe **vorher aus** war. Ein `turn_on` auf ein schon eingeschaltetes Licht ändert dann nichts an Helligkeit oder Farbe.
-* Die **Standardhelligkeit** wird verwendet, wenn keine Helligkeit angegeben ist (`brightness`, `brightness_pct`, `brightness_step`, `white`).
+* Die **Standard-Helligkeit** wird verwendet, wenn keine Helligkeit angegeben ist (`brightness`, `brightness_pct`, `brightness_step`, `white`).
 * Die **Standard-Farbtemperatur** wird verwendet, wenn keine Farbe angegeben ist (`color_temp_kelvin`, `hs_color`, `rgb_color`, `xy_color`, `white`, `effect` …). Sie geht nur an Mitglieder, die Farbtemperatur unterstützen, und wird auf deren Bereich begrenzt.
 * War die Gruppe aus, werden beide Werte unabhängig voneinander geprüft: `light.turn_on` mit nur `brightness_pct: 30` setzt dann trotzdem die Standard-Farbtemperatur.
 * `transition` und `flash` werden immer durchgereicht.

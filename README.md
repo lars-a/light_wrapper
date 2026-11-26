@@ -66,8 +66,8 @@ Each light group gets a device with:
 | `light.<name>` | The light group |
 | `number.<name>_default_brightness` | Default brightness in % (only if enabled) |
 | `number.<name>_default_color_temperature` | Default color temperature in K (only if enabled; unavailable if none of the lights supports color temperature) |
-| `number.<name>_transition_on` | Own transition when turning on, in s (only if enabled) |
-| `number.<name>_transition_off` | Own transition when turning off, in s (only if enabled) |
+| `number.<name>_default_transition_on` | Own transition when turning on, in s (only if enabled) |
+| `number.<name>_default_transition_off` | Own transition when turning off, in s (only if enabled) |
 | `switch.<name>_apply_defaults_when_on` | Apply defaults even if the group is already on (on by default, see below) |
 
 Entity IDs depend on the system language of Home Assistant; shown here for English.
@@ -105,7 +105,7 @@ data:
 
 ## Global settings
 
-Open the global settings with **Configure** on the **Global settings** entry. They define default transitions for **all** light groups, separately for turning on and off (0–10 s each, in 0.1 s steps). Each enabled transition gets a number entity on the **Light Wrapper global settings** device (`number.light_wrapper_global_settings_transition_on` or `…_transition_off`).
+Open the global settings with **Configure** on the **Global settings** entry. They define default transitions for **all** light groups, separately for turning on and off (0–10 s each, in 0.1 s steps). Each enabled transition gets a number entity on the **Light Wrapper global settings** device (`number.light_wrapper_global_settings_default_transition_on` or `…_default_transition_off`).
 
 Each group can set its own value in its edit dialog with "Use own transition …". The group's own value takes precedence; without one, the global value applies, and without either, no transition is sent.
 
