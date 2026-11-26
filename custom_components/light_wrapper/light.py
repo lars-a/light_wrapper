@@ -83,6 +83,7 @@ PASSIVE_PARAMS = {ATTR_TRANSITION}
 # Parameters for which no default transition is added
 TRANSITION_PARAMS = {ATTR_TRANSITION, ATTR_FLASH}
 
+
 def _optional(validator: vol.All) -> vol.Any:
     """A value, or None to disable the default."""
     return vol.Any(None, validator)
