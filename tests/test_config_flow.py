@@ -368,7 +368,7 @@ async def test_reconfigure_enables_default_with_slider_fallback(hass: HomeAssist
     result = await _reconfigure_flow(hass, entry)
     suggested = _suggested(result)
     assert suggested[CONF_USE_DEFAULT_BRIGHTNESS] is False
-    assert suggested[CONF_DEFAULT_BRIGHTNESS] == 100
+    assert suggested[CONF_DEFAULT_BRIGHTNESS] == 60
 
     # Toggle on, slider untouched -> start value is used
     result = await hass.config_entries.subentries.async_configure(
@@ -378,7 +378,7 @@ async def test_reconfigure_enables_default_with_slider_fallback(hass: HomeAssist
     await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.ABORT
-    assert group_data(entry) == {CONF_ENTITIES: [CT_LIGHT], CONF_DEFAULT_BRIGHTNESS: 100}
+    assert group_data(entry) == {CONF_ENTITIES: [CT_LIGHT], CONF_DEFAULT_BRIGHTNESS: 60}
     assert entry.subentries[group_id(entry)].title == "Wohnzimmer"  # name unchanged
 
 
