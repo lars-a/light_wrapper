@@ -137,11 +137,14 @@ def find_device(hass: HomeAssistant, identifier: str) -> dr.DeviceEntry | None:
     """Device with the identifier (DOMAIN, identifier).
 
     device_registry.async_get_device is deprecated from 2026.10 and its
-    successor is missing in older versions, so search all devices.
+    successor is missing in older versions, so search the devices of all
+    Light Wrapper entries.
     """
-    for device in dr.async_get(hass).devices.values():
-        if (DOMAIN, identifier) in device.identifiers:
-            return device
+    registry = dr.async_get(hass)
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+            if (DOMAIN, identifier) in device.identifiers:
+                return device
     return None
 
 
