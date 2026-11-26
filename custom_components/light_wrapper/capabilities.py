@@ -1,18 +1,21 @@
 """Remember the capabilities of member lights.
 
 Some lights only report their capabilities (color modes, color temperature
-range, features, effects) while they are on. While such a light is off, the
-group would not know that it supports color temperature, so the default color
-temperature or transition would not be sent when turning it on.
+range, features, effects) while they are on, and often not yet in the first
+state after turning on. While such a light does not report them, the group
+would not know that it supports color temperature: the default color
+temperature or transition would not be sent, and the group's color
+temperature controls would disappear for a moment.
 
-While a member is on, its reported capabilities are taken as they are and
-remembered (stored across restarts). While it is off or unavailable, the
-remembered capabilities fill in what its state lacks.
+What a member reports while it is on is remembered (stored across restarts)
+and always combined with what it currently reports. Remembered capabilities are
+dropped when the light is no longer a member of any group, so removing and
+re-adding a light resets them.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from typing import Any
 
 from homeassistant.components.light import (
@@ -34,7 +37,7 @@ DATA_CAPABILITIES = f"{DOMAIN}_capabilities"
 
 
 class CapabilityCache:
-    """Last capabilities seen per member light while it was on."""
+    """Capabilities seen per member light while it was on."""
 
     def __init__(self, hass: HomeAssistant) -> None:
         self._store: Store[dict[str, dict[str, Any]]] = Store(
@@ -53,6 +56,18 @@ class CapabilityCache:
         if not capabilities or self._data.get(entity_id) == capabilities:
             return
         self._data[entity_id] = capabilities
+        self._save()
+
+    @callback
+    def async_keep_only(self, entity_ids: Iterable[str]) -> None:
+        """Forget lights that are no longer a member of any group."""
+        keep = set(entity_ids)
+        if stale := self._data.keys() - keep:
+            for entity_id in stale:
+                del self._data[entity_id]
+            self._save()
+
+    def _save(self) -> None:
         self._store.async_delay_save(lambda: self._data, SAVE_DELAY)
 
 
@@ -63,6 +78,13 @@ async def async_setup_capabilities(hass: HomeAssistant) -> None:
     cache = CapabilityCache(hass)
     await cache.async_load()
     hass.data[DATA_CAPABILITIES] = cache
+
+
+@callback
+def async_keep_capabilities(hass: HomeAssistant, entity_ids: Iterable[str]) -> None:
+    """Forget the capabilities of all lights except these."""
+    if (cache := hass.data.get(DATA_CAPABILITIES)) is not None:
+        cache.async_keep_only(entity_ids)
 
 
 def _capabilities(attributes: Mapping[str, Any]) -> dict[str, Any]:
@@ -80,6 +102,24 @@ def _capabilities(attributes: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
+def _combine(remembered: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
+    """Current values win; color modes, features and effects are added up."""
+    combined = {**remembered, **current}
+    if modes := set(remembered.get(ATTR_SUPPORTED_COLOR_MODES, [])) | set(
+        current.get(ATTR_SUPPORTED_COLOR_MODES, [])
+    ):
+        combined[ATTR_SUPPORTED_COLOR_MODES] = sorted(modes)
+    if features := remembered.get(ATTR_SUPPORTED_FEATURES, 0) | current.get(
+        ATTR_SUPPORTED_FEATURES, 0
+    ):
+        combined[ATTR_SUPPORTED_FEATURES] = features
+    if effects := list(
+        dict.fromkeys([*remembered.get(ATTR_EFFECT_LIST, []), *current.get(ATTR_EFFECT_LIST, [])])
+    ):
+        combined[ATTR_EFFECT_LIST] = effects
+    return combined
+
+
 @callback
 def member_capabilities(hass: HomeAssistant, entity_id: str) -> dict[str, Any]:
     """Capabilities of a member light (empty if none are known).
@@ -92,20 +132,7 @@ def member_capabilities(hass: HomeAssistant, entity_id: str) -> dict[str, Any]:
     cache: CapabilityCache | None = hass.data.get(DATA_CAPABILITIES)
     if cache is None:
         return current
+    combined = _combine(cache.get(entity_id), current)
     if state is not None and state.state == STATE_ON:
-        cache.async_remember(entity_id, current)
-        return current
-
-    remembered = cache.get(entity_id)
-    merged = {**remembered, **current}
-    modes = set(remembered.get(ATTR_SUPPORTED_COLOR_MODES, [])) | set(
-        current.get(ATTR_SUPPORTED_COLOR_MODES, [])
-    )
-    if modes:
-        merged[ATTR_SUPPORTED_COLOR_MODES] = sorted(modes)
-    features = remembered.get(ATTR_SUPPORTED_FEATURES, 0) | current.get(
-        ATTR_SUPPORTED_FEATURES, 0
-    )
-    if features:
-        merged[ATTR_SUPPORTED_FEATURES] = features
-    return merged
+        cache.async_remember(entity_id, combined)
+    return combined

@@ -27,7 +27,7 @@ from homeassistant.helpers import (
 )
 from homeassistant.helpers.typing import ConfigType
 
-from .capabilities import async_setup_capabilities
+from .capabilities import async_keep_capabilities, async_setup_capabilities
 from .const import (
     CONF_APPLY_WHEN_ON,
     CONF_AREA,
@@ -297,6 +297,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry)
     if not is_global(entry):
         _async_update_hidden_members(hass, _members(entry, hidden_only=True), set())
         _async_create_group_devices(hass, entry)
+        async_keep_capabilities(hass, _members(entry))
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, _platforms(entry))
     return True

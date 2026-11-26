@@ -121,7 +121,7 @@ A transition of 0 s is sent explicitly as `transition: 0`. This is not the same 
 * If the group was off, both values are checked independently: `light.turn_on` with only `brightness_pct: 30` still applies the default color temperature.
 * `transition` and `flash` are always passed through.
 * The **default transition** is used for every `turn_on` or `turn_off` without `transition` and without `flash`, even if the group is already on (for example when changing the brightness). It is only sent to members that support transitions.
-* Some lights only report their capabilities (color temperature and its range, transitions, effects) while they are on. Light Wrapper remembers the capabilities each member reports while it is on, also across restarts, and uses them while the light is off. Such a light gets the default color temperature and transition once it has been on with Light Wrapper loaded.
+* Some lights only report their capabilities (color temperature and its range, transitions, effects) while they are on, often not yet right after turning on. Light Wrapper remembers the capabilities each member reports while it is on, also across restarts, and always combines them with what the light currently reports. Removing a light from all groups resets them. Such a light gets the default color temperature and transition once it has been on with Light Wrapper loaded.
 
 ## Group state
 

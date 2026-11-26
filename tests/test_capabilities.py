@@ -109,17 +109,39 @@ async def test_capabilities_are_stored(hass: HomeAssistant, hass_storage: dict[s
     assert stored["max_color_temp_kelvin"] == 5000
 
 
-async def test_state_while_on_replaces_remembered_capabilities(
-    hass: HomeAssistant, member_calls
-) -> None:
-    set_member(hass, LIGHT, "on")
-    await setup_wrapper(hass, [LIGHT], **DEFAULTS)
-    # Now reports dimming only while on, then nothing while off
-    set_member(hass, LIGHT, "on", modes=("brightness",))
-    await hass.async_block_till_done()
+async def test_turning_on_without_capabilities_keeps_them(hass: HomeAssistant) -> None:
+    """The first state after turning on often lacks the capabilities."""
+    set_member(hass, LIGHT, "on", min_kelvin=2700, max_kelvin=5000)
+    await setup_wrapper(hass, [LIGHT])
     _off_without_capabilities(hass)
     await hass.async_block_till_done()
 
-    await _turn_on(hass)
-    _service, data = calls_by_entity(member_calls)[LIGHT]
-    assert ATTR_COLOR_TEMP_KELVIN not in data
+    set_member(hass, LIGHT, "on", modes=())
+    await hass.async_block_till_done()
+
+    state = hass.states.get(WRAPPER_ID)
+    assert state.state == "on"
+    assert "color_temp" in state.attributes[ATTR_SUPPORTED_COLOR_MODES]
+    assert state.attributes["min_color_temp_kelvin"] == 2700
+    assert state.attributes["max_color_temp_kelvin"] == 5000
+
+
+async def test_lights_outside_groups_are_forgotten(
+    hass: HomeAssistant, hass_storage: dict[str, Any]
+) -> None:
+    hass_storage[STORAGE_KEY] = {
+        "version": STORAGE_VERSION,
+        "minor_version": 1,
+        "key": STORAGE_KEY,
+        "data": {
+            LIGHT: {ATTR_SUPPORTED_COLOR_MODES: ["color_temp"]},
+            "light.old": {ATTR_SUPPORTED_COLOR_MODES: ["color_temp"]},
+        },
+    }
+    _off_without_capabilities(hass)
+    await setup_wrapper(hass, [LIGHT])
+
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=30))
+    await hass.async_block_till_done()
+
+    assert set(hass_storage[STORAGE_KEY]["data"]) == {LIGHT}
