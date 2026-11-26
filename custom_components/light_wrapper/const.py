@@ -12,6 +12,9 @@ CONF_ENTRY_TYPE = "entry_type"
 ENTRY_TYPE_GLOBAL = "global"
 ENTRY_TYPE_GROUPS = "groups"
 ENTRY_TYPES = (ENTRY_TYPE_GROUPS, ENTRY_TYPE_GLOBAL)
+# Keys in the data of an import flow (besides CONF_ENTRY_TYPE)
+IMPORT_TITLE = "title"
+IMPORT_OPTIONS = "options"
 SUBENTRY_TYPE_GROUP = "light_group"
 
 # Entry titles are not translated by Home Assistant, so they are picked once

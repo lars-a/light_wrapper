@@ -7,6 +7,8 @@ from homeassistant.const import CONF_ENTITIES, CONF_NAME, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import device_registry as dr
+from homeassistant.setup import async_setup_component
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.light_wrapper.config_flow import (
     CONF_USE_DEFAULT_BRIGHTNESS,
@@ -93,6 +95,8 @@ async def test_setup_creates_both_entries_without_questions(hass: HomeAssistant)
     assert global_settings.title == "Global settings"
     assert global_settings.unique_id == ENTRY_TYPE_GLOBAL
     assert groups.unique_id == ENTRY_TYPE_GROUPS
+    # Not created as a system entry, otherwise the UI offers no "Delete"
+    assert global_settings.source == config_entries.SOURCE_IMPORT
 
     # "Configure" only on the global entry, "Add light group" only on the groups entry
     assert global_settings.supports_options is True
@@ -131,6 +135,33 @@ async def test_setup_recreates_missing_entry(hass: HomeAssistant) -> None:
     assert result["data"] == {CONF_ENTRY_TYPE: ENTRY_TYPE_GLOBAL}
     assert len(hass.config_entries.async_entries(DOMAIN)) == 2
     assert len(groups.subentries) == 0  # groups entry untouched
+
+
+async def test_old_system_global_entry_is_replaced(hass: HomeAssistant) -> None:
+    """A global entry created with SOURCE_SYSTEM (up to 0.7.1) is replaced once."""
+    old = MockConfigEntry(
+        domain=DOMAIN,
+        title="Meine Einstellungen",
+        unique_id=ENTRY_TYPE_GLOBAL,
+        source=config_entries.SOURCE_SYSTEM,
+        data={CONF_ENTRY_TYPE: ENTRY_TYPE_GLOBAL},
+        options={CONF_DEFAULT_TRANSITION_ON: 1.5},
+    )
+    old.add_to_hass(hass)
+
+    assert await async_setup_component(hass, DOMAIN, {})
+    await hass.async_block_till_done()
+
+    entries = hass.config_entries.async_entries(DOMAIN)
+    assert len(entries) == 1
+    new = entries[0]
+    assert new.entry_id != old.entry_id
+    assert new.source == config_entries.SOURCE_IMPORT
+    assert new.title == "Meine Einstellungen"
+    assert new.data == {CONF_ENTRY_TYPE: ENTRY_TYPE_GLOBAL}
+    assert dict(new.options) == {CONF_DEFAULT_TRANSITION_ON: 1.5}
+    assert new.state is config_entries.ConfigEntryState.LOADED
+    assert global_number_entity_id(hass, new, CONF_DEFAULT_TRANSITION_ON) is not None
 
 
 # --------------------------------------------------------------------------- Add group

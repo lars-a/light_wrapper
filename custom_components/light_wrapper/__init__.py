@@ -10,9 +10,17 @@ from collections.abc import Callable, Hashable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from homeassistant.config_entries import ConfigEntry, ConfigEntryState, ConfigSubentry
+from homeassistant.config_entries import (
+    SOURCE_IMPORT,
+    SOURCE_SYSTEM,
+    ConfigEntry,
+    ConfigEntryState,
+    ConfigSubentry,
+)
 from homeassistant.const import CONF_ENTITIES, Platform
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     CONF_APPLY_WHEN_ON,
@@ -21,6 +29,8 @@ from .const import (
     DEFAULT_KEYS,
     DOMAIN,
     ENTRY_TYPE_GLOBAL,
+    IMPORT_OPTIONS,
+    IMPORT_TITLE,
     MAX_TRANSITION,
     MIN_TRANSITION,
     SUBENTRY_TYPE_GROUP,
@@ -31,6 +41,8 @@ from .const import (
 PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.NUMBER, Platform.SWITCH]
 # The "Global settings" entry only has number entities
 GLOBAL_PLATFORMS: list[Platform] = [Platform.NUMBER]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 @dataclass
@@ -155,6 +167,30 @@ def _structure(entry: ConfigEntry) -> Hashable:
             for subentry_id, subentry in group_subentries(entry).items()
         ),
     )
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Replace a global entry created by 0.7.x once.
+
+    Up to 0.7.1 the global entry was created with SOURCE_SYSTEM, for which the UI
+    offers no "Delete". The source cannot be changed afterwards, so the entry is
+    replaced by a new one (same title and options) created with SOURCE_IMPORT.
+    """
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        if not (is_global(entry) and entry.source == SOURCE_SYSTEM):
+            continue
+        data = {
+            CONF_ENTRY_TYPE: ENTRY_TYPE_GLOBAL,
+            IMPORT_TITLE: entry.title,
+            IMPORT_OPTIONS: dict(entry.options),
+        }
+        await hass.config_entries.async_remove(entry.entry_id)
+        hass.async_create_task(
+            hass.config_entries.flow.async_init(
+                DOMAIN, context={"source": SOURCE_IMPORT}, data=data
+            )
+        )
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry) -> bool:

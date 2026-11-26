@@ -9,7 +9,7 @@ import voluptuous as vol
 
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.config_entries import (
-    SOURCE_SYSTEM,
+    SOURCE_IMPORT,
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
@@ -33,6 +33,8 @@ from .const import (
     ENTRY_TITLES,
     ENTRY_TYPE_GROUPS,
     ENTRY_TYPES,
+    IMPORT_OPTIONS,
+    IMPORT_TITLE,
     FALLBACK_BRIGHTNESS_PCT,
     FALLBACK_COLOR_TEMP_KELVIN,
     FALLBACK_TRANSITION,
@@ -232,25 +234,36 @@ class LightWrapperConfigFlow(ConfigFlow, domain=DOMAIN):
             self.hass.async_create_task(
                 self.hass.config_entries.flow.async_init(
                     DOMAIN,
-                    context={"source": SOURCE_SYSTEM},
+                    # Not SOURCE_SYSTEM: the UI hides "Delete" for system entries
+                    context={"source": SOURCE_IMPORT},
                     data={CONF_ENTRY_TYPE: entry_type},
                 )
             )
         return await self._async_create(first)
 
-    async def async_step_system(self, data: dict[str, Any]) -> ConfigFlowResult:
-        """Create an entry started by async_step_user."""
-        return await self._async_create(data[CONF_ENTRY_TYPE])
+    async def async_step_import(self, data: dict[str, Any]) -> ConfigFlowResult:
+        """Create an entry started by async_step_user or async_setup.
 
-    async def _async_create(self, entry_type: str) -> ConfigFlowResult:
+        Title and options are optional (used when an old entry is replaced).
+        """
+        return await self._async_create(
+            data[CONF_ENTRY_TYPE], data.get(IMPORT_TITLE), data.get(IMPORT_OPTIONS)
+        )
+
+    async def _async_create(
+        self,
+        entry_type: str,
+        title: str | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
         await self.async_set_unique_id(entry_type)
         self._abort_if_unique_id_configured()
-        titles = ENTRY_TITLES[entry_type]
-        language = (self.hass.config.language or "en").split("-")[0]
+        if title is None:
+            titles = ENTRY_TITLES[entry_type]
+            language = (self.hass.config.language or "en").split("-")[0]
+            title = titles.get(language, titles["en"])
         return self.async_create_entry(
-            title=titles.get(language, titles["en"]),
-            data={CONF_ENTRY_TYPE: entry_type},
-            options={},
+            title=title, data={CONF_ENTRY_TYPE: entry_type}, options=options or {}
         )
 
 
