@@ -61,6 +61,18 @@ def _color_temp_selector_config(result) -> dict:
     raise AssertionError("No color temperature slider in the form")
 
 
+def _subentry_ids(device, entry_id: str) -> set[str | None]:
+    """Subentries the device belongs to within the entry.
+
+    From 2026.10 a device belongs to a single entry (config_subentry_id);
+    config_entries_subentries is deprecated there.
+    """
+    if hasattr(device, "config_subentry_id"):
+        assert device.config_entry_id == entry_id
+        return {device.config_subentry_id}
+    return set(device.config_entries_subentries[entry_id])
+
+
 async def _add_group_flow(hass: HomeAssistant, entry):
     return await hass.config_entries.subentries.async_init(
         (entry.entry_id, SUBENTRY_TYPE_GROUP),
@@ -218,7 +230,7 @@ async def test_add_group(hass: HomeAssistant) -> None:
     device = find_device(hass, group_id(entry))
     assert device is not None
     assert device.name == "Wohnzimmer"
-    assert group_id(entry) in device.config_entries_subentries[entry.entry_id]
+    assert _subentry_ids(device, entry.entry_id) == {group_id(entry)}
 
 
 async def test_add_group_without_defaults(hass: HomeAssistant) -> None:
@@ -431,7 +443,7 @@ async def test_global_options_flow(hass: HomeAssistant) -> None:
     # The "Global settings" device belongs to the main entry, not to a group
     device = find_device(hass, entry.entry_id)
     assert device is not None
-    assert device.config_entries_subentries[entry.entry_id] == {None}
+    assert _subentry_ids(device, entry.entry_id) == {None}
 
 
 async def test_reconfigure_on_when_all_on(hass: HomeAssistant) -> None:
