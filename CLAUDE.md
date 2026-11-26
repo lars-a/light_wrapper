@@ -4,7 +4,7 @@ Home-Assistant-Custom-Integration (Domain `light_wrapper`), installiert über HA
 
 Sprache:
 
-- Commit-Messages, Code-Kommentare und Docstrings (auch in den Tests) sind auf **Englisch**.
+- Commit-Messages, Release-Notes, Code-Kommentare und Docstrings (auch in den Tests) sind auf **Englisch**.
 - README gibt es zweimal: `README.md` (Englisch, wird von GitHub und HACS/Marketplace angezeigt) und `README.de.md` (Deutsch). Bei jeder Änderung **beide** pflegen; oben verlinken sie einander.
 - Mit dem Nutzer wird Deutsch gesprochen.
 
@@ -39,7 +39,7 @@ Ein Release wird **nur auf ausdrückliche Anweisung** des Nutzers erstellt, nich
 
 1. `version` in `custom_components/light_wrapper/manifest.json` erhöhen (SemVer).
 2. Commit auf `main`, pushen und warten, bis „Validate“ grün ist.
-3. `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Änderungen auf Deutsch>"`
+3. `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<changes in English>"`
 4. `.github/workflows/release.yml` setzt die Version aus dem Tag ins Manifest und hängt `light_wrapper.zip` an. Prüfen mit `gh release view vX.Y.Z --json assets`.
 
 Ohne Release sieht HACS keine neue Version. Reine Doku-Änderungen brauchen kein Release. Nach einer Änderung, die HACS-Nutzer betrifft, darf ein Release vorgeschlagen, aber nicht ungefragt erstellt werden.
