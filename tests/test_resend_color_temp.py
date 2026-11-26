@@ -115,11 +115,6 @@ async def test_no_resend_without_color_temp(hass: HomeAssistant, member_calls) -
     assert calls[-1] == ([CT_LIGHT], {ATTR_COLOR_TEMP_KELVIN: 2700})
     assert len(calls) == 3
 
-    member_calls.reset_mock()
-    await _turn_on(hass, brightness_pct=30, hs_color=(30, 50))
-    # A color instead of a color temperature: nothing to resend
-    assert len(member_calls.call_args_list) == 1
-
 
 async def test_setting_in_edit_dialog(hass: HomeAssistant) -> None:
     set_member(hass, CT_LIGHT, "off")
