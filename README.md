@@ -83,7 +83,7 @@ The range of the default color temperature is the **common range** of all lights
 
 ## Global settings
 
-Open the global settings with **Configure** on the **Global settings** entry. They define default transitions for **all** light groups, separately for turning on and off (0–10 s each, in 0.1 s steps). Each enabled transition gets a number entity on the **Global settings** device (`number.global_settings_transition_on` or `…_transition_off`).
+Open the global settings with **Configure** on the **Global settings** entry. They define default transitions for **all** light groups, separately for turning on and off (0–10 s each, in 0.1 s steps). Each enabled transition gets a number entity on the **Light Wrapper global settings** device (`number.light_wrapper_global_settings_transition_on` or `…_transition_off`).
 
 Each group can set its own value in its edit dialog with "Use own transition …". The group's own value takes precedence; without one, the global value applies, and without either, no transition is sent.
 

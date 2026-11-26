@@ -83,7 +83,7 @@ Der Bereich der Standard-Farbtemperatur ist der **gemeinsame Bereich** aller Lic
 
 ## Globale Einstellungen
 
-Die globalen Einstellungen öffnest du über **Konfigurieren** am Eintrag **Globale Einstellungen**. Sie legen Standard-Übergangszeiten für **alle** Lichtgruppen fest, getrennt für Ein- und Ausschalten (je 0–10 s in 0,1-s-Schritten). Für jede aktivierte Übergangszeit gibt es eine Number-Entität am Gerät **Globale Einstellungen** (`number.globale_einstellungen_ubergangszeit_einschalten` bzw. `…_ausschalten`).
+Die globalen Einstellungen öffnest du über **Konfigurieren** am Eintrag **Globale Einstellungen**. Sie legen Standard-Übergangszeiten für **alle** Lichtgruppen fest, getrennt für Ein- und Ausschalten (je 0–10 s in 0,1-s-Schritten). Für jede aktivierte Übergangszeit gibt es eine Number-Entität am Gerät **Light Wrapper Globale Einstellungen** (`number.light_wrapper_globale_einstellungen_ubergangszeit_einschalten` bzw. `…_ausschalten`).
 
 Jede Gruppe kann in ihrem Bearbeiten-Dialog mit „Eigene Übergangszeit … verwenden“ einen eigenen Wert festlegen. Der eigene Wert geht vor; ohne eigenen Wert gilt der globale, und ohne beides wird keine Übergangszeit gesendet.
 

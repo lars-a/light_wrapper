@@ -97,7 +97,7 @@
   },
   "device": {
     "global": {
-      "name": "Global settings"
+      "name": "Light Wrapper global settings"
     }
   },
   "entity": {
