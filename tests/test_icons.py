@@ -88,3 +88,19 @@ async def test_icons_in_edit_dialog(hass: HomeAssistant) -> None:
     assert suggested[CONF_ICON_ON] == "mdi:lamp"
     assert group_data(entry) == {CONF_ENTITIES: [LIGHT]}
     assert _icon(hass) == "mdi:lightbulb-group"
+
+
+async def test_icon_fields_follow_the_lights(hass: HomeAssistant) -> None:
+    set_member(hass, LIGHT, "off")
+    entry = await setup_wrapper(hass, [LIGHT])
+
+    for context in (
+        {"source": config_entries.SOURCE_USER},
+        {"source": config_entries.SOURCE_RECONFIGURE, "subentry_id": group_id(entry)},
+    ):
+        result = await hass.config_entries.subentries.async_init(
+            (entry.entry_id, SUBENTRY_TYPE_GROUP), context=context
+        )
+        keys = [str(key) for key in result["data_schema"].schema]
+        position = keys.index(CONF_ENTITIES)
+        assert keys[position + 1 : position + 3] == [CONF_ICON_ON, CONF_ICON_OFF]

@@ -42,6 +42,8 @@
             "name": "Name",
             "area_id": "Bereich",
             "entities": "Lichter",
+            "icon_on": "Icon wenn an",
+            "icon_off": "Icon wenn aus",
             "use_default_brightness": "Standard-Helligkeit verwenden",
             "default_brightness_pct": "Standard-Helligkeit",
             "use_default_color_temp": "Standard-Farbtemperatur verwenden",
@@ -52,11 +54,11 @@
             "default_transition_off": "Übergangszeit beim Ausschalten",
             "apply_defaults_when_on": "Standardwerte auch bei eingeschaltetem Licht",
             "on_when_all_on": "Erst an, wenn alle Lichter an sind",
-            "hide_members": "Mitglieder ausblenden",
-            "icon_on": "Icon wenn an",
-            "icon_off": "Icon wenn aus"
+            "hide_members": "Mitglieder ausblenden"
           },
           "data_description": {
+            "icon_on": "Optional. Leer: Standard-Icon (mdi:lightbulb-group).",
+            "icon_off": "Optional. Leer: Standard-Icon (mdi:lightbulb-group). Gilt auch, solange der Zustand unbekannt ist.",
             "area_id": "Bereich des neuen Geräts. Die Entity-IDs werden dann mit dem Bereich gebildet. Später änderst du den Bereich am Gerät.",
             "default_brightness_pct": "Wird beim Einschalten verwendet, wenn keine Helligkeit angegeben ist.",
             "default_color_temp_kelvin": "Wird beim Einschalten verwendet, wenn keine Farbe angegeben ist; nur an Lichter, die Farbtemperatur unterstützen.",
@@ -66,9 +68,7 @@
             "default_transition_off": "Wird beim Ausschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
             "apply_defaults_when_on": "Ein Einschalten ohne Parameter setzt die Standardwerte auch dann, wenn die Gruppe schon an ist.",
             "on_when_all_on": "Aus: Die Gruppe ist an, sobald ein Licht an ist. An: erst, wenn alle Lichter an sind (nicht verfügbare Lichter zählen nicht).",
-            "hide_members": "Blendet die Lichter der Gruppe in der Oberfläche aus (wie bei Gruppen-Helfern). Beim Abschalten, beim Entfernen eines Lichts aus der Gruppe oder beim Löschen der Gruppe werden sie wieder eingeblendet. Selbst ausgeblendete Lichter bleiben ausgeblendet.",
-            "icon_on": "Optional. Leer: Standard-Icon (mdi:lightbulb-group).",
-            "icon_off": "Optional. Leer: Standard-Icon (mdi:lightbulb-group). Gilt auch, solange der Zustand unbekannt ist."
+            "hide_members": "Blendet die Lichter der Gruppe in der Oberfläche aus (wie bei Gruppen-Helfern). Beim Abschalten, beim Entfernen eines Lichts aus der Gruppe oder beim Löschen der Gruppe werden sie wieder eingeblendet. Selbst ausgeblendete Lichter bleiben ausgeblendet."
           }
         },
         "reconfigure": {
@@ -76,6 +76,8 @@
           "data": {
             "name": "Name",
             "entities": "Lichter",
+            "icon_on": "Icon wenn an",
+            "icon_off": "Icon wenn aus",
             "use_default_brightness": "Standard-Helligkeit verwenden",
             "default_brightness_pct": "Standard-Helligkeit",
             "use_default_color_temp": "Standard-Farbtemperatur verwenden",
@@ -86,11 +88,11 @@
             "default_transition_off": "Übergangszeit beim Ausschalten",
             "apply_defaults_when_on": "Standardwerte auch bei eingeschaltetem Licht",
             "on_when_all_on": "Erst an, wenn alle Lichter an sind",
-            "hide_members": "Mitglieder ausblenden",
-            "icon_on": "Icon wenn an",
-            "icon_off": "Icon wenn aus"
+            "hide_members": "Mitglieder ausblenden"
           },
           "data_description": {
+            "icon_on": "Optional. Leer: Standard-Icon (mdi:lightbulb-group).",
+            "icon_off": "Optional. Leer: Standard-Icon (mdi:lightbulb-group). Gilt auch, solange der Zustand unbekannt ist.",
             "default_brightness_pct": "Wird beim Einschalten verwendet, wenn keine Helligkeit angegeben ist.",
             "default_color_temp_kelvin": "Wird beim Einschalten verwendet, wenn keine Farbe angegeben ist; nur an Lichter, die Farbtemperatur unterstützen.",
             "use_default_transition_on": "Aus: Es gilt die globale Übergangszeit, falls eine eingestellt ist.",
@@ -99,9 +101,7 @@
             "default_transition_off": "Wird beim Ausschalten verwendet, wenn keine Übergangszeit angegeben ist; nur an Lichter, die Übergänge unterstützen.",
             "apply_defaults_when_on": "Ein Einschalten ohne Parameter setzt die Standardwerte auch dann, wenn die Gruppe schon an ist.",
             "on_when_all_on": "Aus: Die Gruppe ist an, sobald ein Licht an ist. An: erst, wenn alle Lichter an sind (nicht verfügbare Lichter zählen nicht).",
-            "hide_members": "Blendet die Lichter der Gruppe in der Oberfläche aus (wie bei Gruppen-Helfern). Beim Abschalten, beim Entfernen eines Lichts aus der Gruppe oder beim Löschen der Gruppe werden sie wieder eingeblendet. Selbst ausgeblendete Lichter bleiben ausgeblendet.",
-            "icon_on": "Optional. Leer: Standard-Icon (mdi:lightbulb-group).",
-            "icon_off": "Optional. Leer: Standard-Icon (mdi:lightbulb-group). Gilt auch, solange der Zustand unbekannt ist."
+            "hide_members": "Blendet die Lichter der Gruppe in der Oberfläche aus (wie bei Gruppen-Helfern). Beim Abschalten, beim Entfernen eines Lichts aus der Gruppe oder beim Löschen der Gruppe werden sie wieder eingeblendet. Selbst ausgeblendete Lichter bleiben ausgeblendet."
           }
         }
       },

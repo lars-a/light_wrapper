@@ -106,6 +106,12 @@ def _group_schema(
                     exclude_entities=exclude_entities,
                 )
             ),
+            **{
+                vol.Optional(key): selector.IconSelector(
+                    selector.IconSelectorConfig(placeholder=DEFAULT_ICON)
+                )
+                for key in ICON_KEYS
+            },
             vol.Optional(CONF_USE_DEFAULT_BRIGHTNESS): selector.BooleanSelector(),
             vol.Optional(CONF_DEFAULT_BRIGHTNESS): selector.NumberSelector(
                 selector.NumberSelectorConfig(
@@ -130,12 +136,6 @@ def _group_schema(
             vol.Optional(CONF_APPLY_WHEN_ON): selector.BooleanSelector(),
             vol.Optional(CONF_ON_WHEN_ALL_ON): selector.BooleanSelector(),
             vol.Optional(CONF_HIDE_MEMBERS): selector.BooleanSelector(),
-            **{
-                vol.Optional(key): selector.IconSelector(
-                    selector.IconSelectorConfig(placeholder=DEFAULT_ICON)
-                )
-                for key in ICON_KEYS
-            },
         }
     )
 
