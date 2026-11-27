@@ -122,7 +122,7 @@ A transition of 0 s is sent explicitly as `transition: 0`. This is not the same 
 * `transition` and `flash` are always passed through.
 * The **default transition** is used for every `turn_on` or `turn_off` without `transition` and without `flash`, even if the group is already on (for example when changing the brightness). It is only sent to members that support transitions.
 * Some lights only report their capabilities (color temperature and its range, transitions, effects) while they are on, often not yet right after turning on. Light Wrapper remembers the capabilities each member reports while it is on, also across restarts, and always combines them with what the light currently reports. Removing a light from all groups resets them. Such a light gets the default color temperature and transition once it has been on with Light Wrapper loaded.
-* **"Send color temperature again after turning on"** (in the group's edit dialog, off by default) is a workaround for lights that ignore the color temperature in the command that actually turns them on. Members that were off and got a color temperature receive a second `turn_on` with only that color temperature 0.5 s later. Members that were already on are not affected.
+* Such lights often also ignore the color temperature in the command that turns them on. Light Wrapper therefore waits until a light that was off reports its color temperature support again (at most 10 s). If it does not show the requested color temperature by then, it gets a second `turn_on` with only the color temperature. This happens in the background; a later command with a color, or turning the group off, cancels it. Lights that report their capabilities while off are not affected.
 
 ## Group state
 

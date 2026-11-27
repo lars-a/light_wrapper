@@ -45,7 +45,7 @@ from homeassistant.const import (
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, State, callback
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 
 from . import LightWrapperConfigEntry, global_defaults, normalize_default
 from .const import (
@@ -53,7 +53,6 @@ from .const import (
     CONF_DEFAULT_COLOR_TEMP,
     CONF_DEFAULT_TRANSITION_OFF,
     CONF_DEFAULT_TRANSITION_ON,
-    CONF_RESEND_COLOR_TEMP,
     DEFAULT_KEYS,
     MAX_BRIGHTNESS_PCT,
     MAX_COLOR_TEMP_KELVIN,
@@ -61,7 +60,8 @@ from .const import (
     MIN_BRIGHTNESS_PCT,
     MIN_COLOR_TEMP_KELVIN,
     MIN_TRANSITION,
-    RESEND_COLOR_TEMP_DELAY,
+    RESEND_COLOR_TEMP_TIMEOUT,
+    RESEND_COLOR_TEMP_TOLERANCE,
     SERVICE_SET_DEFAULTS,
 )
 from .capabilities import member_capabilities
@@ -211,6 +211,8 @@ class LightWrapperLight(LightEntity):
         self._attr_supported_color_modes = {ColorMode.ONOFF}
         self._attr_color_mode = None
         self._attr_is_on = None
+        # Pending second color temperature commands: entity_id -> cancel
+        self._pending_color_temp: dict[str, Callable[[], None]] = {}
 
     # ----------------------------------------------------------------- lifecycle
 
@@ -230,6 +232,7 @@ class LightWrapperLight(LightEntity):
             self.async_write_ha_state()
 
         self.async_on_remove(self._data.async_add_listener(_settings_changed))
+        self.async_on_remove(lambda: self._async_cancel_color_temp(list(self._pending_color_temp)))
         self._async_update_group_state()
 
     # ----------------------------------------------------------------- state
@@ -344,11 +347,14 @@ class LightWrapperLight(LightEntity):
             else None
         )
         transition = self._default_transition(CONF_DEFAULT_TRANSITION_ON, kwargs)
-        # Members this call actually switches on (for the resend workaround)
-        were_off = {
+        # Members that are off and do not report color temperature support
+        # right now (it is only known from memory, see capabilities.py)
+        hiding = {
             entity_id
             for entity_id in self._entity_ids
-            if (state := self.hass.states.get(entity_id)) is None or state.state != STATE_ON
+            if (state := self.hass.states.get(entity_id)) is not None
+            and state.state != STATE_ON
+            and ColorMode.COLOR_TEMP not in (state.attributes.get(ATTR_SUPPORTED_COLOR_MODES) or [])
         }
         sent: dict[str, dict[str, Any]] = {}
 
@@ -363,39 +369,68 @@ class LightWrapperLight(LightEntity):
             sent[entity_id] = data
             return data
 
-        await self._async_call_members(SERVICE_TURN_ON, payload)
-        await self._async_resend_color_temp(
-            {
-                entity_id: sent[entity_id][ATTR_COLOR_TEMP_KELVIN]
-                for entity_id in were_off
-                if ATTR_COLOR_TEMP_KELVIN in sent.get(entity_id, {})
-            }
+        payloads: dict[str, dict[str, Any]] = {}
+        for entity_id in self._entity_ids:
+            payloads[entity_id] = payload(entity_id)
+        # A new color replaces a pending color temperature; brightness alone does not
+        self._async_cancel_color_temp(
+            [eid for eid, data in payloads.items() if data.keys() & COLOR_PARAMS]
         )
+        await self._async_call_members(SERVICE_TURN_ON, payloads.__getitem__)
+        for entity_id in hiding:
+            if (kelvin := sent[entity_id].get(ATTR_COLOR_TEMP_KELVIN)) is not None:
+                self._async_send_color_temp_when_ready(entity_id, kelvin)
 
-    async def _async_resend_color_temp(self, kelvins: dict[str, int]) -> None:
-        """Workaround for lights that ignore the color temperature when switched on.
+    @callback
+    def _async_send_color_temp_when_ready(self, entity_id: str, kelvin: int) -> None:
+        """Workaround for lights that hide their color temperature support while off.
 
-        If enabled for the group, the members that were just switched on get
-        their color temperature again in a second turn_on shortly afterwards.
+        Such lights often ignore the color temperature in the command that
+        switches them on. As soon as the light reports color temperature support
+        again, it gets the color temperature in a second turn_on, unless it
+        already shows it. Gives up after RESEND_COLOR_TEMP_TIMEOUT seconds.
         """
-        subentry = self._entry.subentries.get(self._subentry_id)
-        if not kelvins or subentry is None or not subentry.data.get(CONF_RESEND_COLOR_TEMP):
-            return
-        await asyncio.sleep(RESEND_COLOR_TEMP_DELAY)
-        by_kelvin: dict[int, list[str]] = {}
-        for entity_id, kelvin in kelvins.items():
-            by_kelvin.setdefault(kelvin, []).append(entity_id)
-        await asyncio.gather(
-            *(
-                self._async_call(
-                    SERVICE_TURN_ON, sorted(entity_ids), {ATTR_COLOR_TEMP_KELVIN: kelvin}
-                )
-                for kelvin, entity_ids in by_kelvin.items()
+        self._async_cancel_color_temp([entity_id])
+
+        @callback
+        def _check(_event: Event[EventStateChangedData] | None = None) -> None:
+            state = self.hass.states.get(entity_id)
+            if state is None or state.state != STATE_ON:
+                return
+            if ColorMode.COLOR_TEMP not in (state.attributes.get(ATTR_SUPPORTED_COLOR_MODES) or []):
+                return
+            self._async_cancel_color_temp([entity_id])
+            current = state.attributes.get(ATTR_COLOR_TEMP_KELVIN)
+            if current is not None and abs(int(current) - kelvin) <= RESEND_COLOR_TEMP_TOLERANCE:
+                return
+            self.hass.async_create_task(
+                self._async_call(SERVICE_TURN_ON, [entity_id], {ATTR_COLOR_TEMP_KELVIN: kelvin})
             )
+
+        unsub_state = async_track_state_change_event(self.hass, [entity_id], _check)
+        unsub_timer = async_call_later(
+            self.hass,
+            RESEND_COLOR_TEMP_TIMEOUT,
+            lambda _now: self._async_cancel_color_temp([entity_id]),
         )
+
+        def _cancel() -> None:
+            unsub_state()
+            unsub_timer()
+
+        self._pending_color_temp[entity_id] = _cancel
+        # The light may already report it right after the call
+        _check()
+
+    @callback
+    def _async_cancel_color_temp(self, entity_ids: Iterable[str]) -> None:
+        for entity_id in entity_ids:
+            if (cancel := self._pending_color_temp.pop(entity_id, None)) is not None:
+                cancel()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off; without transition/flash, use the default transition."""
+        self._async_cancel_color_temp(list(self._pending_color_temp))
         transition = self._default_transition(CONF_DEFAULT_TRANSITION_OFF, kwargs)
         await self._async_call_members(
             SERVICE_TURN_OFF,

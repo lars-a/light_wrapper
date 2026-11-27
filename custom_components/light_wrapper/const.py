@@ -51,11 +51,11 @@ DEFAULT_ON_WHEN_ALL_ON = False
 # like Home Assistant's group helper. Only a setting in the group's edit
 # dialog. Off by default; only an enabled setting (True) is stored.
 CONF_HIDE_MEMBERS = "hide_members"
-# Workaround: send the color temperature again shortly after turning a light on
-# (dialog only, no entity; stored only as True)
-CONF_RESEND_COLOR_TEMP = "resend_color_temp"
-# Seconds between the turn_on that switches a light on and the second one
-RESEND_COLOR_TEMP_DELAY = 0.5
+# Workaround for lights that hide their color temperature support while off:
+# how long to wait for them to report it after turning on (seconds), and the
+# deviation (K) up to which the color temperature counts as applied
+RESEND_COLOR_TEMP_TIMEOUT = 10
+RESEND_COLOR_TEMP_TOLERANCE = 50
 # Area for the group's device; only used when the device is created
 CONF_AREA = "area_id"
 
