@@ -16,6 +16,7 @@ re-adding a light resets them.
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+import logging
 from typing import Any
 
 from homeassistant.components.light import (
@@ -35,6 +36,8 @@ STORAGE_VERSION = 1
 SAVE_DELAY = 10
 DATA_CAPABILITIES = f"{DOMAIN}_capabilities"
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class CapabilityCache:
     """Capabilities seen per member light while it was on."""
@@ -47,6 +50,7 @@ class CapabilityCache:
 
     async def async_load(self) -> None:
         self._data = await self._store.async_load() or {}
+        _LOGGER.debug("Remembered capabilities loaded: %s", self._data)
 
     def get(self, entity_id: str) -> dict[str, Any]:
         return self._data.get(entity_id, {})
@@ -55,6 +59,7 @@ class CapabilityCache:
     def async_remember(self, entity_id: str, capabilities: dict[str, Any]) -> None:
         if not capabilities or self._data.get(entity_id) == capabilities:
             return
+        _LOGGER.debug("Remembering the capabilities of %s: %s", entity_id, capabilities)
         self._data[entity_id] = capabilities
         self._save()
 
@@ -63,6 +68,7 @@ class CapabilityCache:
         """Forget lights that are no longer a member of any group."""
         keep = set(entity_ids)
         if stale := self._data.keys() - keep:
+            _LOGGER.debug("Forgetting the capabilities of %s", sorted(stale))
             for entity_id in stale:
                 del self._data[entity_id]
             self._save()

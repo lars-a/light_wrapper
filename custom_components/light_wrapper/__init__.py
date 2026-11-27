@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Hashable, Mapping
 from dataclasses import dataclass, field
+import logging
 from typing import Any
 
 from homeassistant.config_entries import (
@@ -53,6 +54,8 @@ PLATFORMS: list[Platform] = [Platform.LIGHT, Platform.NUMBER, Platform.SWITCH]
 GLOBAL_PLATFORMS: list[Platform] = [Platform.NUMBER]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -224,10 +227,12 @@ def _async_update_hidden_members(
             continue
         if entity_id in hide:
             if registry_entry.hidden_by is None:
+                _LOGGER.debug("Hiding member %s", entity_id)
                 registry.async_update_entity(
                     entity_id, hidden_by=er.RegistryEntryHider.INTEGRATION
                 )
         elif registry_entry.hidden_by is er.RegistryEntryHider.INTEGRATION:
+            _LOGGER.debug("Showing member %s again", entity_id)
             registry.async_update_entity(entity_id, hidden_by=None)
 
 
@@ -263,6 +268,7 @@ def _async_create_group_devices(hass: HomeAssistant, entry: ConfigEntry) -> None
             model="Light group",
         )
         device_registry.async_update_device(device.id, area_id=area_id)
+        _LOGGER.debug("Created the device of group %s in area %s", subentry.title, area_id)
 
 
 def _structure(entry: ConfigEntry) -> Hashable:
@@ -355,6 +361,11 @@ def _device_listener(
             for device in dr.async_entries_for_config_entry(registry, entry.entry_id)
         ):
             return
+        _LOGGER.debug(
+            "Device %s was %s",
+            event.data["device_id"],
+            "enabled" if event.data["changes"]["disabled_by"] else "disabled",
+        )
         _async_update_hidden_members(
             hass, _hidden_members(hass, entry), _members(entry, hidden_only=True)
         )
@@ -379,8 +390,10 @@ async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigE
         )
 
     if _structure(entry) != runtime.structure:
+        _LOGGER.debug("%s: groups, lights or enabled defaults changed, reloading", entry.title)
         await hass.config_entries.async_reload(entry.entry_id)
         return
+    _LOGGER.debug("%s: settings changed, applying without a reload", entry.title)
 
     runtime.global_settings.async_set_settings(
         defaults_from_options(entry.options), DEFAULT_APPLY_WHEN_ON

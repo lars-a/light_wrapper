@@ -136,6 +136,16 @@ Eine Übergangszeit von 0 s wird ausdrücklich als `transition: 0` gesendet. Das
 * **„Icon wenn an“** und **„Icon wenn aus“** (im Bearbeiten-Dialog der Gruppe, optional) legen das Icon der Gruppen-Lichtentität je Zustand fest; das Icon für aus gilt auch, solange der Zustand unbekannt ist. Ist eins nicht gesetzt, gilt das Standard-Icon `mdi:lightbulb-group`. Ein direkt an der Entität eingestelltes Icon hat Vorrang.
 * Aktive Standardwerte der Gruppe stehen zusätzlich als Attribute an der Lichtentität (`default_brightness_pct`, `default_color_temp_kelvin`, `default_transition_on`, `default_transition_off`). Globale Übergangszeiten erscheinen dort nicht.
 
+## Debug-Protokollierung
+
+Um zu sehen, was die Integration tut (Befehle an die Lichter, angewendete Standardwerte und Übergänge, der zweite Farbtemperatur-Befehl, gemerkte Fähigkeiten, ausgeblendete Mitglieder, Neuladen), aktiviere auf der Seite der Integration **Debug-Protokollierung aktivieren** oder ergänze in der `configuration.yaml`:
+
+```yaml
+logger:
+  logs:
+    custom_components.light_wrapper: debug
+```
+
 ## Lizenz
 
 [MIT](LICENSE)

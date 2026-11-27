@@ -136,6 +136,16 @@ A transition of 0 s is sent explicitly as `transition: 0`. This is not the same 
 * **"Icon when on"** and **"Icon when off"** (in the group's edit dialog, optional) set the group light's icon for each state; the off icon is also used while the state is unknown. If one is not set, the default icon `mdi:lightbulb-group` is used. An icon you set on the entity itself takes precedence.
 * The group's active defaults are also shown as attributes of the light entity (`default_brightness_pct`, `default_color_temp_kelvin`, `default_transition_on`, `default_transition_off`). Global transitions do not appear there.
 
+## Debug logging
+
+To see what the integration does (commands sent to the lights, defaults and transitions applied, the second color temperature command, remembered capabilities, hidden members, reloads), enable **Enable debug logging** on the integration's page, or add this to `configuration.yaml`:
+
+```yaml
+logger:
+  logs:
+    custom_components.light_wrapper: debug
+```
+
 ## License
 
 [MIT](LICENSE)

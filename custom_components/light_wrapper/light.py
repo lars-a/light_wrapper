@@ -6,6 +6,7 @@ import asyncio
 from collections import Counter
 from collections.abc import Callable, Iterable
 import itertools
+import logging
 from typing import Any
 
 import voluptuous as vol
@@ -43,6 +44,7 @@ from homeassistant.const import (
     STATE_UNKNOWN,
 )
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, State, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_call_later, async_track_state_change_event
@@ -69,6 +71,8 @@ from .const import (
 )
 from .capabilities import member_capabilities
 from .entity import clamp, color_temp_range, device_info
+
+_LOGGER = logging.getLogger(__name__)
 
 # Parameters that set a brightness -> default brightness is not applied
 BRIGHTNESS_PARAMS = {ATTR_BRIGHTNESS, ATTR_WHITE}
@@ -358,6 +362,17 @@ class LightWrapperLight(LightEntity):
             else None
         )
         transition = self._default_transition(CONF_DEFAULT_TRANSITION_ON, kwargs)
+        _LOGGER.debug(
+            "%s: turn_on %s (was on: %s, defaults applied: %s, brightness %s %%, "
+            "color temperature %s K, transition %s s)",
+            self.entity_id,
+            kwargs,
+            self.is_on,
+            apply_defaults,
+            brightness_pct,
+            color_temp,
+            transition,
+        )
         # Members that are off and do not report color temperature support
         # right now (it is only known from memory, see capabilities.py)
         hiding = {
@@ -413,17 +428,41 @@ class LightWrapperLight(LightEntity):
             self._async_cancel_color_temp([entity_id])
             current = state.attributes.get(ATTR_COLOR_TEMP_KELVIN)
             if current is not None and abs(int(current) - kelvin) <= RESEND_COLOR_TEMP_TOLERANCE:
+                _LOGGER.debug(
+                    "%s: %s reports color temperature again and already shows %s K",
+                    self.entity_id,
+                    entity_id,
+                    current,
+                )
                 return
-            self.hass.async_create_task(
-                self._async_call(SERVICE_TURN_ON, [entity_id], {ATTR_COLOR_TEMP_KELVIN: kelvin})
+            _LOGGER.debug(
+                "%s: %s reports color temperature again (%s K), sending %s K again",
+                self.entity_id,
+                entity_id,
+                current,
+                kelvin,
             )
+            self.hass.async_create_task(self._async_resend_color_temp(entity_id, kelvin))
 
-        unsub_state = async_track_state_change_event(self.hass, [entity_id], _check)
-        unsub_timer = async_call_later(
-            self.hass,
-            RESEND_COLOR_TEMP_TIMEOUT,
-            lambda _now: self._async_cancel_color_temp([entity_id]),
+        @callback
+        def _timeout(_now: Any) -> None:
+            _LOGGER.debug(
+                "%s: %s did not report color temperature within %s s, giving up",
+                self.entity_id,
+                entity_id,
+                RESEND_COLOR_TEMP_TIMEOUT,
+            )
+            self._async_cancel_color_temp([entity_id])
+
+        _LOGGER.debug(
+            "%s: %s hides its color temperature support while off, "
+            "waiting to send %s K again",
+            self.entity_id,
+            entity_id,
+            kelvin,
         )
+        unsub_state = async_track_state_change_event(self.hass, [entity_id], _check)
+        unsub_timer = async_call_later(self.hass, RESEND_COLOR_TEMP_TIMEOUT, _timeout)
 
         def _cancel() -> None:
             unsub_state()
@@ -432,6 +471,18 @@ class LightWrapperLight(LightEntity):
         self._pending_color_temp[entity_id] = _cancel
         # The light may already report it right after the call
         _check()
+
+    async def _async_resend_color_temp(self, entity_id: str, kelvin: int) -> None:
+        """The second turn_on of the workaround; runs as a task, so failures are logged."""
+        try:
+            await self._async_call(SERVICE_TURN_ON, [entity_id], {ATTR_COLOR_TEMP_KELVIN: kelvin})
+        except HomeAssistantError as err:
+            _LOGGER.warning(
+                "%s: sending the color temperature again to %s failed: %s",
+                self.entity_id,
+                entity_id,
+                err,
+            )
 
     @callback
     def _async_cancel_color_temp(self, entity_ids: Iterable[str]) -> None:
@@ -443,6 +494,7 @@ class LightWrapperLight(LightEntity):
         """Turn off; without transition/flash, use the default transition."""
         self._async_cancel_color_temp(list(self._pending_color_temp))
         transition = self._default_transition(CONF_DEFAULT_TRANSITION_OFF, kwargs)
+        _LOGGER.debug("%s: turn_off %s (transition %s s)", self.entity_id, kwargs, transition)
         await self._async_call_members(
             SERVICE_TURN_OFF,
             lambda entity_id: self._with_transition(entity_id, kwargs, transition),
@@ -464,6 +516,7 @@ class LightWrapperLight(LightEntity):
             if key == CONF_DEFAULT_COLOR_TEMP:
                 value = clamp(value, color_temp_range(self.hass, self._entity_ids))
             data[key] = value
+        _LOGGER.debug("%s: set_defaults %s", self.entity_id, values)
         self.hass.config_entries.async_update_subentry(self._entry, subentry, data=data)
 
     def _default_transition(self, key: str, kwargs: dict[str, Any]) -> float | None:
@@ -521,6 +574,7 @@ class LightWrapperLight(LightEntity):
         return kelvin
 
     async def _async_call(self, service: str, entity_ids: list[str], data: dict[str, Any]) -> None:
+        _LOGGER.debug("%s: light.%s %s %s", self.entity_id, service, entity_ids, data)
         await self.hass.services.async_call(
             LIGHT_DOMAIN,
             service,

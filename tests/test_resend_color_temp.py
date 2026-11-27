@@ -13,6 +13,7 @@ from homeassistant.components.light import (
 )
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_OFF, SERVICE_TURN_ON
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 
 from custom_components.light_wrapper.const import CONF_DEFAULT_COLOR_TEMP
@@ -129,3 +130,16 @@ async def test_latest_color_temp_is_sent(hass: HomeAssistant, member_calls) -> N
     assert _calls(member_calls)[2:] == [
         (SERVICE_TURN_ON, [LIGHT], {ATTR_COLOR_TEMP_KELVIN: 3300})
     ]
+
+
+async def test_failed_second_command_is_logged(
+    hass: HomeAssistant, member_calls, caplog
+) -> None:
+    await _setup_hiding_light(hass)
+
+    await _call(hass, SERVICE_TURN_ON)
+    member_calls.side_effect = HomeAssistantError("unreachable")
+    await _reports_again(hass)
+
+    assert len(member_calls.call_args_list) == 2
+    assert "sending the color temperature again to light.decke failed: unreachable" in caplog.text
