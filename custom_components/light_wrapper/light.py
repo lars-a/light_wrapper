@@ -53,6 +53,9 @@ from .const import (
     CONF_DEFAULT_COLOR_TEMP,
     CONF_DEFAULT_TRANSITION_OFF,
     CONF_DEFAULT_TRANSITION_ON,
+    CONF_ICON_OFF,
+    CONF_ICON_ON,
+    DEFAULT_ICON,
     DEFAULT_KEYS,
     MAX_BRIGHTNESS_PCT,
     MAX_COLOR_TEMP_KELVIN,
@@ -199,7 +202,6 @@ class LightWrapperLight(LightEntity):
     _attr_has_entity_name = True
     _attr_name = None
     _attr_should_poll = False
-    _attr_icon = "mdi:lightbulb-group"
 
     def __init__(self, entry: LightWrapperConfigEntry, subentry_id: str) -> None:
         self._entry = entry
@@ -227,7 +229,7 @@ class LightWrapperLight(LightEntity):
         )
         @callback
         def _settings_changed() -> None:
-            # "on only when all are on" changes the state without a reload
+            # "on only when all are on" and the icons change without a reload
             self._async_update_group_state()
             self.async_write_ha_state()
 
@@ -236,6 +238,15 @@ class LightWrapperLight(LightEntity):
         self._async_update_group_state()
 
     # ----------------------------------------------------------------- state
+
+    @property
+    def icon(self) -> str:
+        """The group's own icon for on or off, otherwise the default icon."""
+        subentry = self._entry.subentries.get(self._subentry_id)
+        key = CONF_ICON_ON if self.is_on else CONF_ICON_OFF
+        if subentry is not None and (icon := subentry.data.get(key)):
+            return icon
+        return DEFAULT_ICON
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:

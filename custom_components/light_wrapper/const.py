@@ -51,6 +51,11 @@ DEFAULT_ON_WHEN_ALL_ON = False
 # like Home Assistant's group helper. Only a setting in the group's edit
 # dialog. Off by default; only an enabled setting (True) is stored.
 CONF_HIDE_MEMBERS = "hide_members"
+# Optional icons of the group light while on / off (stored only when set)
+CONF_ICON_ON = "icon_on"
+CONF_ICON_OFF = "icon_off"
+ICON_KEYS = (CONF_ICON_ON, CONF_ICON_OFF)
+DEFAULT_ICON = "mdi:lightbulb-group"
 # Workaround for lights that hide their color temperature support while off:
 # how long to wait for them to report it after turning on (seconds), and the
 # deviation (K) up to which the color temperature counts as applied

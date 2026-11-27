@@ -32,11 +32,13 @@ from .const import (
     CONF_AREA,
     CONF_HIDE_MEMBERS,
     CONF_ON_WHEN_ALL_ON,
+    ICON_KEYS,
     CONF_DEFAULT_BRIGHTNESS,
     CONF_DEFAULT_COLOR_TEMP,
     CONF_DEFAULT_TRANSITION_OFF,
     CONF_DEFAULT_TRANSITION_ON,
     CONF_ENTRY_TYPE,
+    DEFAULT_ICON,
     DOMAIN,
     ENTRY_TITLES,
     ENTRY_TYPE_GROUPS,
@@ -128,6 +130,12 @@ def _group_schema(
             vol.Optional(CONF_APPLY_WHEN_ON): selector.BooleanSelector(),
             vol.Optional(CONF_ON_WHEN_ALL_ON): selector.BooleanSelector(),
             vol.Optional(CONF_HIDE_MEMBERS): selector.BooleanSelector(),
+            **{
+                vol.Optional(key): selector.IconSelector(
+                    selector.IconSelectorConfig(placeholder=DEFAULT_ICON)
+                )
+                for key in ICON_KEYS
+            },
         }
     )
 
@@ -173,6 +181,9 @@ def _group_form_values(
     values[CONF_APPLY_WHEN_ON] = apply_when_on_from_options(options)
     values[CONF_ON_WHEN_ALL_ON] = on_when_all_on_from_options(options)
     values[CONF_HIDE_MEMBERS] = bool(options.get(CONF_HIDE_MEMBERS))
+    for key in ICON_KEYS:
+        if options.get(key):
+            values[key] = options[key]
     return values
 
 
@@ -181,7 +192,7 @@ def _group_options(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str,
 
     The "apply when on" switch is only stored when it is off, the "on only when
     all are on" and "hide members" settings only when they are on (all only
-    when not the default).
+    when not the default), the icons only when they are set.
 
     The color temperature is limited to the common range of the selected lights
     (the selection may have changed in the same form).
@@ -194,6 +205,9 @@ def _group_options(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str,
         options[CONF_ON_WHEN_ALL_ON] = True
     if user_input.get(CONF_HIDE_MEMBERS):
         options[CONF_HIDE_MEMBERS] = True
+    for key in ICON_KEYS:
+        if icon := (user_input.get(key) or "").strip():
+            options[key] = icon
     if CONF_DEFAULT_COLOR_TEMP in options:
         options[CONF_DEFAULT_COLOR_TEMP] = clamp(
             options[CONF_DEFAULT_COLOR_TEMP],

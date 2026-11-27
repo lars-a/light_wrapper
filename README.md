@@ -132,6 +132,7 @@ A transition of 0 s is sent explicitly as `transition: 0`. This is not the same 
 * Supported color modes and features are the union of all members. The current color mode is the most common one among the members that are on.
 * The `entity_id` attribute lists the members, as with regular groups.
 * With **"Hide members"** (in the group's edit dialog, off by default), the group's lights are hidden in the UI, like with group helpers. They are shown again when the setting is turned off, when a light is removed from the group, or when the group or the **Light groups** entry is deleted. Lights you hid yourself stay hidden.
+* **"Icon when on"** and **"Icon when off"** (in the group's edit dialog, optional) set the group light's icon for each state; the off icon is also used while the state is unknown. If one is not set, the default icon `mdi:lightbulb-group` is used. An icon you set on the entity itself takes precedence.
 * The group's active defaults are also shown as attributes of the light entity (`default_brightness_pct`, `default_color_temp_kelvin`, `default_transition_on`, `default_transition_off`). Global transitions do not appear there.
 
 ## License

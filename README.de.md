@@ -132,6 +132,7 @@ Eine Übergangszeit von 0 s wird ausdrücklich als `transition: 0` gesendet. Das
 * Unterstützte Farbmodi und Features sind die Vereinigung aller Mitglieder. Als aktueller Farbmodus gilt der häufigste unter den eingeschalteten Mitgliedern.
 * Das Attribut `entity_id` listet die Mitglieder, wie bei normalen Gruppen.
 * Mit **„Mitglieder ausblenden“** (im Bearbeiten-Dialog der Gruppe, standardmäßig aus) werden die Lichter der Gruppe in der Oberfläche ausgeblendet, wie bei Gruppen-Helfern. Sie werden wieder eingeblendet, wenn die Einstellung abgeschaltet, ein Licht aus der Gruppe entfernt oder die Gruppe bzw. der Eintrag **Lichtgruppen** gelöscht wird. Selbst ausgeblendete Lichter bleiben ausgeblendet.
+* **„Icon wenn an“** und **„Icon wenn aus“** (im Bearbeiten-Dialog der Gruppe, optional) legen das Icon der Gruppen-Lichtentität je Zustand fest; das Icon für aus gilt auch, solange der Zustand unbekannt ist. Ist eins nicht gesetzt, gilt das Standard-Icon `mdi:lightbulb-group`. Ein direkt an der Entität eingestelltes Icon hat Vorrang.
 * Aktive Standardwerte der Gruppe stehen zusätzlich als Attribute an der Lichtentität (`default_brightness_pct`, `default_color_temp_kelvin`, `default_transition_on`, `default_transition_off`). Globale Übergangszeiten erscheinen dort nicht.
 
 ## Lizenz
