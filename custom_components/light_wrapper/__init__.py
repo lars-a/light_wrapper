@@ -18,7 +18,7 @@ from homeassistant.config_entries import (
     ConfigSubentry,
 )
 from homeassistant.const import CONF_ENTITIES, Platform
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import (
     area_registry as ar,
     config_validation as cv,
@@ -182,6 +182,34 @@ def _members(entry: ConfigEntry, *, hidden_only: bool = False) -> set[str]:
 
 
 @callback
+def _disabled_groups(hass: HomeAssistant, entry: ConfigEntry) -> set[str]:
+    """subentry_ids of the groups whose device is disabled."""
+    return {
+        identifier
+        for device in dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)
+        if device.disabled_by is not None
+        for domain, identifier in device.identifiers
+        if domain == DOMAIN
+    }
+
+
+@callback
+def _hidden_members(hass: HomeAssistant, entry: ConfigEntry) -> set[str]:
+    """Member lights to hide: those of enabled groups that hide their members.
+
+    While a group's device is disabled, its lights are shown again (unless
+    another enabled group hides them).
+    """
+    disabled = _disabled_groups(hass, entry)
+    return {
+        entity_id
+        for subentry_id, subentry in group_subentries(entry).items()
+        if subentry.data.get(CONF_HIDE_MEMBERS) and subentry_id not in disabled
+        for entity_id in subentry.data.get(CONF_ENTITIES, [])
+    }
+
+
+@callback
 def _async_update_hidden_members(
     hass: HomeAssistant, hide: set[str], candidates: set[str]
 ) -> None:
@@ -295,12 +323,43 @@ async def async_setup_entry(hass: HomeAssistant, entry: LightWrapperConfigEntry)
         structure=_structure(entry),
     )
     if not is_global(entry):
-        _async_update_hidden_members(hass, _members(entry, hidden_only=True), set())
+        # Members of disabled groups are candidates so they are shown again
+        _async_update_hidden_members(
+            hass, _hidden_members(hass, entry), _members(entry, hidden_only=True)
+        )
         _async_create_group_devices(hass, entry)
         async_keep_capabilities(hass, _members(entry))
+        entry.async_on_unload(
+            hass.bus.async_listen(
+                dr.EVENT_DEVICE_REGISTRY_UPDATED, _device_listener(hass, entry)
+            )
+        )
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, _platforms(entry))
     return True
+
+
+def _device_listener(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> Callable[[Event[dr.EventDeviceRegistryUpdatedData]], None]:
+    """Show or hide the members again when a group's device is disabled or enabled."""
+
+    @callback
+    def _changed(event: Event[dr.EventDeviceRegistryUpdatedData]) -> None:
+        if event.data["action"] != "update" or "disabled_by" not in event.data["changes"]:
+            return
+        # DeviceEntry.config_entries is deprecated, config_entry_id is missing in 2025.3
+        registry = dr.async_get(hass)
+        if not any(
+            device.id == event.data["device_id"]
+            for device in dr.async_entries_for_config_entry(registry, entry.entry_id)
+        ):
+            return
+        _async_update_hidden_members(
+            hass, _hidden_members(hass, entry), _members(entry, hidden_only=True)
+        )
+
+    return _changed
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigEntry) -> None:
@@ -316,7 +375,7 @@ async def _async_update_listener(hass: HomeAssistant, entry: LightWrapperConfigE
         # Lights that left a group (or whose group was removed) are candidates too
         previous = {eid for group in runtime.groups.values() for eid in group.entities}
         _async_update_hidden_members(
-            hass, _members(entry, hidden_only=True), previous | _members(entry)
+            hass, _hidden_members(hass, entry), previous | _members(entry)
         )
 
     if _structure(entry) != runtime.structure:

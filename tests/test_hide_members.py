@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from homeassistant.const import CONF_ENTITIES
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from custom_components.light_wrapper.const import CONF_HIDE_MEMBERS
 
-from .conftest import group_id, set_member, setup_integration, setup_wrapper
+from .conftest import find_device, group_id, set_member, setup_integration, setup_wrapper
 
 CT_LIGHT = "light.decke"
 DIM_LIGHT = "light.stehlampe"
@@ -105,3 +105,45 @@ async def test_members_not_hidden_by_default(hass: HomeAssistant) -> None:
     _register(hass, CT_LIGHT)
     await setup_wrapper(hass, [CT_LIGHT])
     assert _hidden_by(hass, CT_LIGHT) is None
+
+
+def _disable_group_device(hass: HomeAssistant, entry, disabled: bool) -> None:
+    device = find_device(hass, group_id(entry))
+    dr.async_get(hass).async_update_device(
+        device.id, disabled_by=dr.DeviceEntryDisabler.USER if disabled else None
+    )
+
+
+async def test_members_shown_while_group_device_disabled(hass: HomeAssistant) -> None:
+    _register(hass, CT_LIGHT)
+    entry = await setup_wrapper(hass, [CT_LIGHT], **{CONF_HIDE_MEMBERS: True})
+    assert _hidden_by(hass, CT_LIGHT) is er.RegistryEntryHider.INTEGRATION
+
+    _disable_group_device(hass, entry, True)
+    await hass.async_block_till_done()
+    assert _hidden_by(hass, CT_LIGHT) is None
+
+    # Also after a reload while the device is disabled
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert _hidden_by(hass, CT_LIGHT) is None
+
+    _disable_group_device(hass, entry, False)
+    await hass.async_block_till_done()
+    assert _hidden_by(hass, CT_LIGHT) is er.RegistryEntryHider.INTEGRATION
+
+
+async def test_member_stays_hidden_by_other_enabled_group(hass: HomeAssistant) -> None:
+    _register(hass, CT_LIGHT)
+    _global, entry = await setup_integration(
+        hass,
+        groups={
+            "Wohnzimmer": {CONF_ENTITIES: [CT_LIGHT], CONF_HIDE_MEMBERS: True},
+            "Alle": {CONF_ENTITIES: [CT_LIGHT], CONF_HIDE_MEMBERS: True},
+        },
+    )
+    group = next(s for s in entry.subentries.values() if s.title == "Wohnzimmer")
+    device = find_device(hass, group.subentry_id)
+    dr.async_get(hass).async_update_device(device.id, disabled_by=dr.DeviceEntryDisabler.USER)
+    await hass.async_block_till_done()
+    assert _hidden_by(hass, CT_LIGHT) is er.RegistryEntryHider.INTEGRATION
